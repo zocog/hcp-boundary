@@ -41,6 +41,11 @@ begin;
   values
     ('p______tacos', 't__________t', 'Taco Food Truck Target');
 
+  insert into target_multi
+    (project_id, public_id)
+  values
+    ('p______tacos', 't__________t');
+
   insert into target_host_set
     (project_id,     target_id,      host_set_id)
   values
