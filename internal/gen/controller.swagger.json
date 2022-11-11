@@ -5705,7 +5705,7 @@
         },
         "address": {
           "type": "string",
-          "description": "Optionally, a valid network address to connect to for this target. Can not be used alongside host sources."
+          "description": "Optional boolean expression to filter the workers that are allowed to satisfy this request."
         }
       },
       "title": "Target contains all fields related to a Target resource"

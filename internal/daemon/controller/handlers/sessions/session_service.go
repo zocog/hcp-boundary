@@ -235,6 +235,8 @@ func (s Service) CancelSession(ctx context.Context, req *pbs.CancelSessionReques
 	if ses == nil {
 		return nil, handlers.NotFoundErrorf("Session %q doesn't exist.", req.GetId())
 	}
+	hostId := ses.HostId
+	hostSetId := ses.HostSetId
 
 	var outputFields perms.OutputFieldsMap
 	authorizedActions := authResults.FetchActionSetForId(ctx, ses.GetPublicId(), IdActions)
@@ -271,6 +273,8 @@ func (s Service) CancelSession(ctx context.Context, req *pbs.CancelSessionReques
 		if err != nil {
 			return nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to update session"))
 		}
+		ses.HostId = hostId
+		ses.HostSetId = hostSetId
 	}
 
 	outputOpts := make([]handlers.Option, 0, 3)
