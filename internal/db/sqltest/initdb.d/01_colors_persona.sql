@@ -216,12 +216,6 @@ begin;
     ('p____bcolors', 't_________cb', 'Blue Color Target'),
     ('p____rcolors', 't_________cr', 'Red Color Target');
 
-  insert into target_multi
-    (project_id, public_id)
-  values
-    ('p____bcolors', 't_________cb'),
-    ('p____rcolors', 't_________cr');
-
   insert into target_host_set
     (project_id, target_id, host_set_id)
   values
