@@ -15,6 +15,9 @@ begin;
   comment on table target_address is
     'target_address entries represent a network address set on a target.';
 
+  create trigger immutable_columns before update on target_address
+    for each row execute function immutable_columns('public_id');
+
   create or replace function remove_target_address() returns trigger
   as $$
   begin
