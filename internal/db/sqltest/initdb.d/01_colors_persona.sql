@@ -263,12 +263,28 @@ begin;
     ('p____bcolors', 't_________cb', 'vl______cvl',         'brokered');
 
   insert into session
-    ( project_id,     target_id,      host_set_id,    host_id,        user_id,        auth_token_id,  certificate,  endpoint, public_id)
+    ( project_id,     target_id,     user_id,        auth_token_id,  certificate,  endpoint, public_id)
   values
-    ('p____bcolors', 't_________cb', 's___1cb-sths', 'h_____cb__01', 'u______clare', 'tok____clare', 'abc'::bytea, 'ep1',    's1_____clare'),
-    ('p____bcolors', 't_________cb', 's___1cb-sths', 'h_____cb__01', 'u______cindy', 'tok____cindy', 'abc'::bytea, 'ep1',    's1_____cindy'),
-    ('p____bcolors', 't_________cb', 's___1cb-sths', 'h_____cb__01', 'u______cindy', 'tok____cindy', 'abc'::bytea, 'ep1',    's1_____ciara'),
-    ('p____bcolors', 't_________cb', 's___1cb-sths', 'h_____cb__01', 'u______carly', 'tok____carly', 'abc'::bytea, 'ep1',    's1_____carly');
+    ('p____bcolors', 't_________cb', 'u______clare', 'tok____clare', 'abc'::bytea, 'ep1',    's1_____clare'),
+    ('p____bcolors', 't_________cb', 'u______cindy', 'tok____cindy', 'abc'::bytea, 'ep1',    's1_____cindy'),
+    ('p____bcolors', 't_________cb', 'u______cindy', 'tok____cindy', 'abc'::bytea, 'ep1',    's1_____ciara'),
+    ('p____bcolors', 't_________cb', 'u______carly', 'tok____carly', 'abc'::bytea, 'ep1',    's1_____carly');
+
+  insert into session_host_set
+    (public_id, host_set_id)
+  values
+    ('s1_____clare', 's___1cb-sths'),
+    ('s1_____cindy', 's___1cb-sths'),
+    ('s1_____ciara', 's___1cb-sths'),
+    ('s1_____carly', 's___1cb-sths');
+
+  insert into session_host
+    (public_id, host_id)
+  values
+    ('s1_____clare', 'h_____cb__01'),
+    ('s1_____cindy', 'h_____cb__01'),
+    ('s1_____ciara', 'h_____cb__01'),
+    ('s1_____carly', 'h_____cb__01');
 
   insert into session_connection
     (session_id, public_id)

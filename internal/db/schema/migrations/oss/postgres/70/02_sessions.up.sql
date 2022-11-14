@@ -46,21 +46,6 @@ begin;
   create trigger cancel_session_with_null_fk before update of host_set_id on session_host_set
     for each row execute procedure cancel_session_with_null_fk();
 
-  create or replace function set_session_host_set_to_null() returns trigger
-  as $$
-  begin
-    update session set
-      host_set_id = null
-    where session.public_id = new.public_id;
-    return new;
-  end;
-  $$ language plpgsql;
-  comment on function set_session_host_set_to_null() is
-    'set_session_host_set_to_null updates the host_set_id column in the session table to null.';
-
-  create trigger set_session_host_set_to_null after delete on session_host_set
-    for each row execute procedure set_session_host_set_to_null();
-
   create table session_host (
     public_id wt_public_id,
     host_id wt_public_id,
@@ -84,70 +69,61 @@ begin;
   create trigger cancel_session_with_null_fk before update of host_id on session_host
     for each row execute procedure cancel_session_with_null_fk();
 
-  create or replace function set_session_host_to_null() returns trigger
-  as $$
-  begin
-    update session set
-      host_id = null
-    where session.public_id = new.public_id;
-    return new;
-  end;
-  $$ language plpgsql;
-  comment on function set_session_host_to_null() is
-    'set_session_host_to_null updates the host_id column in the session table to null.';
-
-  create trigger set_session_host_to_null after delete on session_host
-    for each row execute procedure set_session_host_to_null();
-
-  create or replace function insert_session_associations() returns trigger
-  as $$
-  declare
-  has_target_address bigint;
-  begin
-
-    if new.host_id is not null then
-      insert into session_host
-        (public_id, host_id)
-      values
-        (new.public_id, new.host_id);
-    end if;
-
-    if new.host_set_id is not null then
-      insert into session_host_set
-        (public_id, host_set_id)
-      values
-        (new.public_id, new.host_set_id);
-    end if;
-
-    select count(*)
-      into has_target_address
-    from target_address as t
-    where t.public_id = new.target_id;
-
-    if has_target_address > 0 then
-      insert into session_target_address
-        (public_id, target_id)
-      values
-        (new.public_id, new.target_id);
-    end if;
-
-    return new;
-  end;
-  $$ language plpgsql;
-  comment on function insert_session_associations() is
-    'insert_session_associations inserts entries into one or more of the following tables: session_host, session_host_set, session_target_address.'
-    'Inserting into the tables depends on the session using a host source or a direct network address association.';
-
-  create trigger insert_session_associations after insert on session
-    for each row execute procedure insert_session_associations();
-
+  drop view session_list;
+  drop trigger cancel_session_with_null_fk on session;
   alter table session
     drop constraint session_host_id_fkey,
-    drop constraint session_host_set_id_fkey
+    drop constraint session_host_set_id_fkey,
+    drop column host_id,
+    drop column host_set_id
   ;
 
-  drop trigger cancel_session_with_null_fk on session;
   create trigger cancel_session_with_null_fk before update of user_id, target_id, auth_token_id, project_id on session
     for each row execute procedure cancel_session_with_null_fk();
+
+  -- Replaces trigger from 44/04_sessions.up.sql
+  drop trigger insert_session on session;
+  create or replace function insert_session() returns trigger
+  as $$
+  begin
+    case
+      when new.user_id is null then
+        raise exception 'user_id is null';
+      when new.target_id is null then
+        raise exception 'target_id is null';
+      when new.auth_token_id is null then
+        raise exception 'auth_token_id is null';
+      when new.project_id is null then
+        raise exception 'project_id is null';
+      when new.endpoint is null then
+        raise exception 'endpoint is null';
+    else
+    end case;
+    return new;
+  end;
+  $$ language plpgsql;
+
+  create trigger insert_session before insert on session
+    for each row execute procedure insert_session();
+
+  -- Replaces view from 44/04_sessions.up.sql
+  create view session_list as
+  select
+    s.public_id, s.user_id, sh.host_id, s.target_id,
+    shs.host_set_id, s.auth_token_id, s.project_id, s.certificate,s.expiration_time,
+    s.connection_limit, s.tofu_token, s.key_id, s.termination_reason, s.version,
+    s.create_time, s.update_time, s.endpoint, s.worker_filter,
+    ss.state, ss.previous_end_time, ss.start_time, ss.end_time, sc.public_id as connection_id,
+    sc.client_tcp_address, sc.client_tcp_port, sc.endpoint_tcp_address, sc.endpoint_tcp_port,
+    sc.bytes_up, sc.bytes_down, sc.closed_reason
+  from session s
+    join session_state ss on
+      s.public_id = ss.session_id
+    join session_host sh on
+      s.public_id = sh.public_id
+    join session_host_set shs on
+      s.public_id = shs.public_id
+    left join session_connection sc on
+      s.public_id = sc.session_id;
 
 commit;
