@@ -1,5 +1,27 @@
 begin;
 
+  -- Replaces trigger from 44/04_sessions.up.sql
+  drop trigger cancel_session_with_null_fk on session;
+  create or replace function cancel_session_with_null_fk() returns trigger
+  as $$
+  begin
+    case 
+      when new.auth_token_id is null then
+        perform cancel_session(new.public_id);  
+      when new.project_id is null then
+        perform cancel_session(new.public_id);
+      when new.target_id is null then
+        perform cancel_session(new.public_id);
+      when new.user_id is null then
+        perform cancel_session(new.public_id);
+    end case;
+    return new;
+  end;
+  $$ language plpgsql;
+  
+  create trigger cancel_session_with_null_fk before update of auth_token_id, project_id, target_id, user_id on session
+    for each row execute procedure cancel_session_with_null_fk();
+
   create table session_target_address (
     public_id wt_public_id,
     target_id wt_public_id,
@@ -20,8 +42,18 @@ begin;
   create trigger immutable_columns before update on session_target_address
     for each row execute procedure immutable_columns('public_id');
 
-  create trigger cancel_session_with_null_fk before update of target_id on session_target_address
-    for each row execute procedure cancel_session_with_null_fk();
+  create or replace function cancel_session_with_null_target_address_fk() returns trigger
+  as $$
+  begin
+    if new.target_id is null then
+      perform cancel_session(new.public_id);
+    end if;
+    return new;
+  end;
+  $$ language plpgsql;
+  
+  create trigger cancel_session_with_null_target_address_fk before update of target_id on session_target_address
+    for each row execute procedure cancel_session_with_null_target_address_fk();
 
   create table session_host_set (
     public_id wt_public_id,
@@ -43,8 +75,18 @@ begin;
   create trigger immutable_columns before update on session_host_set
     for each row execute procedure immutable_columns('public_id');
 
-  create trigger cancel_session_with_null_fk before update of host_set_id on session_host_set
-    for each row execute procedure cancel_session_with_null_fk();
+  create or replace function cancel_session_with_null_host_set_fk() returns trigger
+  as $$
+  begin
+    if new.host_set_id is null then
+      perform cancel_session(new.public_id);
+    end if;
+    return new;
+  end;
+  $$ language plpgsql;
+  
+  create trigger cancel_session_with_null_host_set_fk before update of host_set_id on session_host_set
+    for each row execute procedure cancel_session_with_null_host_set_fk();
 
   create table session_host (
     public_id wt_public_id,
@@ -66,20 +108,25 @@ begin;
   create trigger immutable_columns before update on session_host
     for each row execute procedure immutable_columns('public_id');
 
-  create trigger cancel_session_with_null_fk before update of host_id on session_host
-    for each row execute procedure cancel_session_with_null_fk();
+  create or replace function cancel_session_with_null_host_fk() returns trigger
+  as $$
+  begin
+    if new.host_id is null then
+      perform cancel_session(new.public_id);
+    end if;
+    return new;
+  end;
+  $$ language plpgsql;
+  create trigger cancel_session_with_null_host_fk before update of host_id on session_host
+    for each row execute procedure cancel_session_with_null_host_fk();
 
   drop view session_list;
-  drop trigger cancel_session_with_null_fk on session;
   alter table session
     drop constraint session_host_id_fkey,
     drop constraint session_host_set_id_fkey,
     drop column host_id,
     drop column host_set_id
   ;
-
-  create trigger cancel_session_with_null_fk before update of user_id, target_id, auth_token_id, project_id on session
-    for each row execute procedure cancel_session_with_null_fk();
 
   -- Replaces trigger from 44/04_sessions.up.sql
   drop trigger insert_session on session;
