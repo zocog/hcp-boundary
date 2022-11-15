@@ -25,9 +25,9 @@ begin;
   create table session_target_address (
     public_id wt_public_id,
     target_id wt_public_id,
-    constraint target_fkey foreign key (target_id)
+    constraint target_address_fkey foreign key (target_id)
         references target_address (public_id)
-        on delete cascade
+        on delete set null
         on update cascade,
     constraint session_fkey foreign key (public_id)
         references session (public_id)
@@ -47,12 +47,13 @@ begin;
   begin
     if new.target_id is null then
       perform cancel_session(new.public_id);
+      delete from session_target_address where public_id = new.public_id;
     end if;
     return new;
   end;
   $$ language plpgsql;
   
-  create trigger cancel_session_with_null_target_address_fk before update of target_id on session_target_address
+  create trigger cancel_session_with_null_target_address_fk after update of target_id on session_target_address
     for each row execute procedure cancel_session_with_null_target_address_fk();
 
   create table session_host_set (
@@ -60,7 +61,7 @@ begin;
     host_set_id wt_public_id,
     constraint host_set_fkey foreign key (host_set_id)
         references host_set (public_id)
-        on delete cascade
+        on delete set null
         on update cascade,
     constraint session_fkey foreign key (public_id)
         references session (public_id)
@@ -80,12 +81,13 @@ begin;
   begin
     if new.host_set_id is null then
       perform cancel_session(new.public_id);
+      delete from session_host_set where public_id = new.public_id;
     end if;
     return new;
   end;
   $$ language plpgsql;
   
-  create trigger cancel_session_with_null_host_set_fk before update of host_set_id on session_host_set
+  create trigger cancel_session_with_null_host_set_fk after update of host_set_id on session_host_set
     for each row execute procedure cancel_session_with_null_host_set_fk();
 
   create table session_host (
@@ -93,7 +95,7 @@ begin;
     host_id wt_public_id,
     constraint host_fkey foreign key (host_id)
         references host (public_id)
-        on delete cascade
+        on delete set null
         on update cascade,
     constraint session_fkey foreign key (public_id)
         references session (public_id)
@@ -113,11 +115,13 @@ begin;
   begin
     if new.host_id is null then
       perform cancel_session(new.public_id);
+      delete from session_host where public_id = new.public_id;
     end if;
     return new;
   end;
   $$ language plpgsql;
-  create trigger cancel_session_with_null_host_fk before update of host_id on session_host
+
+  create trigger cancel_session_with_null_host_fk after update of host_id on session_host
     for each row execute procedure cancel_session_with_null_host_fk();
 
   drop view session_list;
