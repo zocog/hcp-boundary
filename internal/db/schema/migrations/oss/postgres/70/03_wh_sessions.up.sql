@@ -1,5 +1,130 @@
 begin;
 
+  -- replaced view in 44/03_targets.up.sql
+  drop view whx_host_dimension_source;
+  create view whx_host_dimension_source as
+  with
+  host_sources (
+    host_id, host_type, host_name, host_description,
+    host_set_id, host_set_type, host_set_name, host_set_description,
+    host_catalog_id, host_catalog_type, host_catalog_name, host_catalog_description,
+    target_id, target_type, target_name, target_description,
+    target_default_port_number, target_session_max_seconds, target_session_connection_limit,
+    project_id, project_name, project_description,
+    organization_id, organization_name, organization_description
+  ) as (
+    select 
+      h.public_id                       as host_id,
+      case when sh.public_id is not null then 'static host'
+            when ph.public_id is not null then 'plugin host'
+            else 'Unknown' end          as host_type,
+      case when sh.public_id is not null then coalesce(sh.name, 'None')
+            when ph.public_id is not null then coalesce(ph.name, 'None')
+            else 'Unknown' end          as host_name,
+      case when sh.public_id is not null then coalesce(sh.description, 'None')
+            when ph.public_id is not null then coalesce(ph.description, 'None')
+            else 'Unknown' end          as host_description,
+
+      hs.public_id                      as host_set_id,
+      case when shs.public_id is not null then 'static host set'
+            when phs.public_id is not null then 'plugin host set'
+            else 'Unknown' end          as host_set_type,
+      case
+        when shs.public_id is not null then coalesce(shs.name, 'None')
+        when phs.public_id is not null then coalesce(phs.name, 'None')
+        else 'None'
+        end                             as host_set_name,
+      case
+        when shs.public_id is not null then coalesce(shs.description, 'None')
+        when phs.public_id is not null then coalesce(phs.description, 'None')
+        else 'None'
+        end                             as host_set_description,
+      hc.public_id                      as host_catalog_id,
+      case when shc.public_id is not null then 'static host catalog'
+            when phc.public_id is not null then 'plugin host catalog'
+            else 'Unknown' end          as host_catalog_type,
+      case
+        when shc.public_id is not null then coalesce(shc.name, 'None')
+        when phc.public_id is not null then coalesce(phc.name, 'None')
+        else 'None'
+        end                             as host_catalog_name,
+      case
+        when shc.public_id is not null then coalesce(shc.description, 'None')
+        when phc.public_id is not null then coalesce(phc.description, 'None')
+        else 'None'
+        end                             as host_catalog_description,
+      t.public_id                       as target_id,
+      'tcp target'                      as target_type,
+      coalesce(t.name, 'None')          as target_name,
+      coalesce(t.description, 'None')   as target_description,
+      coalesce(t.default_port, 0)       as target_default_port_number,
+      t.session_max_seconds             as target_session_max_seconds,
+      t.session_connection_limit        as target_session_connection_limit,
+      p.public_id                       as project_id,
+      coalesce(p.name, 'None')          as project_name,
+      coalesce(p.description, 'None')   as project_description,
+      o.public_id                       as organization_id,
+      coalesce(o.name, 'None')          as organization_name,
+      coalesce(o.description, 'None')   as organization_description
+    from host as h
+      join host_catalog as hc                on h.catalog_id = hc.public_id
+      join host_set as hs                    on h.catalog_id = hs.catalog_id
+      join target_host_set as ts             on hs.public_id = ts.host_set_id
+      join target_tcp as t                   on ts.target_id = t.public_id
+      join iam_scope as p                    on t.project_id = p.public_id and p.type = 'project'
+      join iam_scope as o                    on p.parent_id = o.public_id and o.type = 'org'
+
+      left join static_host as sh            on sh.public_id = h.public_id
+      left join host_plugin_host as ph       on ph.public_id = h.public_id
+      left join static_host_catalog as shc   on shc.public_id = hc.public_id
+      left join host_plugin_catalog as phc   on phc.public_id = hc.public_id
+      left join static_host_set as shs       on shs.public_id = hs.public_id
+      left join host_plugin_set as phs       on phs.public_id = hs.public_id
+  ),
+  host_target_address (
+    host_id, host_type, host_name, host_description,
+    host_set_id, host_set_type, host_set_name, host_set_description,
+    host_catalog_id, host_catalog_type, host_catalog_name, host_catalog_description,
+    target_id, target_type, target_name, target_description,
+    target_default_port_number, target_session_max_seconds, target_session_connection_limit,
+    project_id, project_name, project_description,
+    organization_id, organization_name, organization_description
+  ) as (
+    select
+      'Not Applicable'                as host_id,
+      'direct address'                as host_type,
+      'Not Applicable'                as host_name,
+      'Not Applicable'                as host_description,
+      'Not Applicable'                as host_set_id,
+      'Not Applicable'                as host_set_type,
+      'Not Applicable'                as host_set_name,
+      'Not Applicable'                as host_set_description,
+      'Not Applicable'                as host_catalog_id,
+      'Not Applicable'                as host_catalog_type,
+      'Not Applicable'                as host_catalog_name,
+      'Not Applicable'                as host_catalog_description,
+      t.public_id                     as target_id,
+      'tcp target'                    as target_type,
+      coalesce(t.name, 'None')        as target_name,
+      coalesce(t.description, 'None') as target_description,
+      coalesce(t.default_port, 0)     as target_default_port_number,
+      t.session_max_seconds           as target_session_max_seconds,
+      t.session_connection_limit      as target_session_connection_limit,
+      p.public_id                     as project_id,
+      coalesce(p.name, 'None')        as project_name,
+      coalesce(p.description, 'None') as project_description,
+      o.public_id                     as organization_id,
+      coalesce(o.name, 'None')        as organization_name,
+      coalesce(o.description, 'None') as organization_description
+    from target_tcp as t
+    right join target_address as ta on t.public_id = ta.public_id
+    left join iam_scope as p        on p.public_id = t.project_id
+    left join iam_scope as o        on o.public_id = p.parent_id
+  )
+  select * from host_sources
+  union
+  select * from host_target_address;
+
   -- replaced function in 26/03_wh_network_address_dimensions.up.sql
   create or replace function wh_upsert_host() returns trigger
   as $$
@@ -155,56 +280,6 @@ begin;
     'Current',              now(),                  'infinity'::timestamptz,     'Unknown'
   );
 
-  -- The whx_host_direct_network_dimension_source view shows the current values in the
-  -- operational tables of the host dimension for targets with direct associations.
-  create view whx_host_direct_network_dimension_source as
-  with
-  targets (project_id, public_id, name, description, default_port, session_max_seconds, session_connection_limit) as (
-    select t.project_id, t.public_id, t.name, t.description, t.default_port, t.session_max_seconds, t.session_connection_limit
-      from target_tcp as t
-      right join target_address as ta on t.public_id = ta.public_id
-  ),
-  target_source (host_id, host_type, host_name, host_description,
-    host_set_id, host_set_type, host_set_name, host_set_description,
-    host_catalog_id, host_catalog_type, host_catalog_name, host_catalog_description,
-    target_id, target_type, target_name, target_description, target_default_port_number, target_session_max_seconds, target_session_connection_limit,
-    project_id, project_name, project_description, host_organization_id, host_organization_name, host_organization_description) as (
-      select
-         'Not Applicable'                as host_id,
-         'Not Applicable'                as host_type,
-         'Not Applicable'                as host_name,
-         'Not Applicable'                as host_description,
-         'Not Applicable'                as host_set_id,
-         'Not Applicable'                as host_set_type,
-         'Not Applicable'                as host_set_name,
-         'Not Applicable'                as host_set_description,
-         'Not Applicable'                as host_catalog_id,
-         'Not Applicable'                as host_catalog_type,
-         'Not Applicable'                as host_catalog_name,
-         'Not Applicable'                as host_catalog_description,
-         t.public_id                     as target_id,
-         'tcp target'                    as target_type,
-         coalesce(t.name, 'None')        as target_name,
-         coalesce(t.description, 'None') as target_description,
-         coalesce(t.default_port, 0)     as target_default_port_number,
-         t.session_max_seconds           as target_session_max_seconds,
-         t.session_connection_limit      as target_session_connection_limit,
-         p.public_id                     as project_id,
-         coalesce(p.name, 'None')        as project_name,
-         coalesce(p.description, 'None') as project_description,
-         o.public_id                     as host_organization_id,
-         coalesce(o.name, 'None')        as host_organization_name,
-         coalesce(o.description, 'None') as host_organization_description
-    from targets as t,
-         iam_scope as p,
-         iam_scope as o
-   where p.public_id = t.project_id
-     and p.type = 'project'
-     and o.public_id = p.parent_id
-     and o.type = 'org'
-  )
-  select * from target_source;
-
   -- keep this simple for now, not sure what the other values should be?
   -- currently with whx_network_address_dimension_source, it can either come from
   -- tables: host_dns_name, host_ip_address, static_host
@@ -260,7 +335,7 @@ begin;
     select wh_upsert_direct_network_address_dimension(p_address) into addr_group_key;
 
     select target.key, addr_group_key, t.* into src
-    from whx_host_direct_network_dimension_source as t
+    from whx_host_dimension_source as t
     where t.host_id               = 'Not Applicable'
       and t.host_set_id           = 'Not Applicable'
       and t.target_id             = new.target_id;
@@ -295,9 +370,9 @@ begin;
              target_id,                  target_type,                target_name,                     target_description,
              target_default_port_number, target_session_max_seconds, target_session_connection_limit,
              project_id,                 project_name,               project_description,
-             host_organization_id,       host_organization_name,     host_organization_description,
+             organization_id,            organization_name,          organization_description,
              'Current',                  current_timestamp,          'infinity'::timestamptz
-      from whx_host_direct_network_dimension_source
+      from whx_host_dimension_source
       where target_id = new.target_id;
 
     end if;

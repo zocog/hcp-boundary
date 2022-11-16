@@ -160,21 +160,18 @@ begin;
   -- Replaces view from 44/04_sessions.up.sql
   create view session_list as
   select
-    s.public_id, s.user_id, sh.host_id, s.target_id,
-    shs.host_set_id, s.auth_token_id, s.project_id, s.certificate,s.expiration_time,
+    s.public_id, s.user_id, s.target_id,
+    coalesce(sh.host_id, 'Not Applicable') as host_id, coalesce(shs.host_set_id, 'Not Applicable') as host_set_id,
+    s.auth_token_id, s.project_id, s.certificate, s.expiration_time,
     s.connection_limit, s.tofu_token, s.key_id, s.termination_reason, s.version,
     s.create_time, s.update_time, s.endpoint, s.worker_filter,
     ss.state, ss.previous_end_time, ss.start_time, ss.end_time, sc.public_id as connection_id,
     sc.client_tcp_address, sc.client_tcp_port, sc.endpoint_tcp_address, sc.endpoint_tcp_port,
     sc.bytes_up, sc.bytes_down, sc.closed_reason
   from session s
-    join session_state ss on
-      s.public_id = ss.session_id
-    join session_host sh on
-      s.public_id = sh.public_id
-    join session_host_set shs on
-      s.public_id = shs.public_id
-    left join session_connection sc on
-      s.public_id = sc.session_id;
+  join session_state ss on s.public_id = ss.session_id
+  left join session_connection sc on s.public_id = sc.session_id
+  left join session_host sh on s.public_id = sh.public_id
+  left join session_host_set shs on s.public_id = shs.public_id;
 
 commit;

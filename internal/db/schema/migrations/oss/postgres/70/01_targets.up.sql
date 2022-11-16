@@ -13,7 +13,7 @@ begin;
         on update cascade
   );
   comment on table target_address is
-    'target_address entries represent a network address set on a target.';
+    'target_address entries represent a network address assigned to a target.';
 
   create trigger immutable_columns before update on target_address
     for each row execute function immutable_columns('public_id');
