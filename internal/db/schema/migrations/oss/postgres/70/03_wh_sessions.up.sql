@@ -97,6 +97,57 @@ begin;
   create trigger wh_update_session_connection_accumulating_fact after insert on session_host
     for each row execute procedure wh_upsert_host();
 
+  --
+
+  -- create or replace function wh_upsert_host_direct_network_address() returns trigger
+  -- as $$
+  -- declare
+  --   p_address      wh_dim_text;
+  --   src            whx_host_dimension_target%rowtype;
+  --   target         whx_host_dimension_target%rowtype;
+  --   addr_group_key wh_dim_key;
+  -- begin
+  --   select address into p_address
+  --     from target_address
+  --   where target_address.target_id = new.target_id;
+
+  --   if p_address is null then
+  --     raise exception 'target address is null';
+  --   end if;
+
+  --   -- when to update host_dimension?
+
+  --   -- need to get row info for target, scopes, and generate network_address_group_key
+  --   insert into wh_host_dimension (
+  --   key,
+  --   host_id, host_type, host_name, host_description,
+  --   host_set_id, host_set_type, host_set_name, host_set_description,
+  --   host_catalog_id, host_catalog_type, host_catalog_name, host_catalog_description, 
+  --   target_id, target_type, target_name, target_description, target_default_port_number, target_session_max_seconds, target_session_connection_limit,
+  --   project_id, project_name, project_description, organization_id, organization_name, organization_description,
+  --   current_row_indicator, row_effective_time, row_expiration_time, network_address_group_key
+  -- )
+  -- values
+  -- (
+  --   'no host source',
+  --   'None',                'None',                  'None',                      'None',
+  --   'None',                'None',                  'None',                      'None',
+  --   new.target_id,                'None',                  'None',                      'None',
+  --   'None',                'None',                  'None',                      'None',                   -1,                  -1,               -1,
+  --   '00000000000',         'None',                  'None',                      '00000000000',        'None',              'None',
+  --   'Current',              now(),                  'infinity'::timestamptz,     'Unknown'
+  -- );
+
+
+  --   return new;
+  -- end;
+  -- $$ language plpgsql;
+
+  -- create trigger wh_update_session_connection_accumulating_fact after insert on session_target_address
+  --   for each row execute procedure wh_upsert_host_direct_network_address();
+
+  --
+
   -- replaced function in 16/04_wh_credential_dimension.up.sql
   create or replace function wh_insert_session() returns trigger
   as $$
