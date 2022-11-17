@@ -373,7 +373,9 @@ begin;
              organization_id,            organization_name,          organization_description,
              'Current',                  current_timestamp,          'infinity'::timestamptz
       from whx_host_dimension_source
-      where target_id = new.target_id;
+      where host_id               = 'Not Applicable'
+        and host_set_id           = 'Not Applicable'
+        and target_id             = new.target_id;
 
     end if;
 
