@@ -73,6 +73,16 @@ message TargetHostSet {
   timestamp.v1.Timestamp create_time = 30;
 }
 
+message TargetAddress {
+  // public_id of the Target
+  // @inject_tag: gorm:"primary_key"
+  string public_id = 10;
+
+  // address associated to the Target
+  // @inject_tag: `gorm:"not_null"`
+  string address = 20;
+}
+
 message CredentialLibrary {
   // target_id of the Target
   // @inject_tag: gorm:"primary_key"

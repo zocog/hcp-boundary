@@ -127,7 +127,7 @@ func TestRepository_CreateTarget(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert, require := assert.New(t), require.New(t)
-			tar, hostSources, credSources, err := repo.CreateTarget(context.Background(), tt.args.target, tt.args.opt...)
+			tar, tarAddr, hostSources, credSources, err := repo.CreateTarget(context.Background(), tt.args.target, tt.args.opt...)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(tar)

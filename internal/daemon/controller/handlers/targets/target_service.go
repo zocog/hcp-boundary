@@ -1003,6 +1003,9 @@ func (s Service) createInRepo(ctx context.Context, item *pb.Target) (target.Targ
 	if item.GetWorkerFilter() != nil {
 		opts = append(opts, target.WithWorkerFilter(item.GetWorkerFilter().GetValue()))
 	}
+	if item.GetAddress() != nil {
+		opts = append(opts, target.WithAddress(item.GetAddress().GetValue()))
+	}
 
 	attr, err := subtypeRegistry.newAttribute(target.SubtypeFromType(item.GetType()), item.GetAttrs())
 	if err != nil {
