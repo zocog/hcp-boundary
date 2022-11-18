@@ -46,4 +46,23 @@ begin;
   create trigger remove_target_host_set after insert on target_address
     for each row execute function remove_target_host_set();
 
+  -- Replaces target_all_subtypes defined in 44/03_targets.up.sql
+  drop view target_all_subtypes;
+  create view target_all_subtypes as
+  select t.public_id,
+         t.project_id,
+         t.name,
+         t.description,
+         t.default_port,
+         t.session_max_seconds,
+         t.session_connection_limit,
+         t.version,
+         t.create_time,
+         t.update_time,
+         t.worker_filter,
+         'tcp' as type,
+         ta.address
+  from target_tcp as t
+  left join target_address as ta on t.public_id = ta.public_id;
+
 commit;
