@@ -65,6 +65,21 @@ func TestRepository_CreateTarget(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "with-static-address",
+			args: args{
+				target: func() target.Target {
+					target, err := target.New(ctx, tcp.Subtype, proj.PublicId,
+						target.WithName("valid-org"),
+						target.WithDescription("valid-org"),
+						target.WithDefaultPort(uint32(22)),
+						target.WithAddress("0.0.0.0"))
+					require.NoError(t, err)
+					return target
+				}(),
+			},
+			wantErr: false,
+		},
+		{
 			name: "nil-target",
 			args: args{
 				target: nil,
@@ -127,7 +142,7 @@ func TestRepository_CreateTarget(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert, require := assert.New(t), require.New(t)
-			tar, tarAddr, hostSources, credSources, err := repo.CreateTarget(context.Background(), tt.args.target, tt.args.opt...)
+			tar, staticAddress, hostSources, credSources, err := repo.CreateTarget(context.Background(), tt.args.target, tt.args.opt...)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.Nil(tar)
@@ -137,11 +152,12 @@ func TestRepository_CreateTarget(t *testing.T) {
 			require.NoError(err)
 			assert.NotNil(tar.GetPublicId())
 
-			foundTarget, foundHostSources, foundCredLibs, err := repo.LookupTarget(context.Background(), tar.GetPublicId())
+			foundTarget, foundStaticAddress, foundHostSources, foundCredLibs, err := repo.LookupTarget(context.Background(), tar.GetPublicId())
 			assert.NoError(err)
 			assert.True(proto.Equal(tar.(*tcp.Target), foundTarget.(*tcp.Target)))
 			assert.Equal(hostSources, foundHostSources)
 			assert.Equal(credSources, foundCredLibs)
+			assert.Equal(staticAddress, foundStaticAddress)
 
 			err = db.TestVerifyOplog(t, rw, tar.GetPublicId(), db.WithOperation(oplog.OpType_OP_TYPE_CREATE), db.WithCreateNotBefore(10*time.Second))
 			assert.NoError(err)
@@ -244,7 +260,7 @@ func TestRepository_UpdateTcpTarget(t *testing.T) {
 			wantRowsUpdate: 0,
 			wantErrMsg:     "db.DoTx: target.(Repository).UpdateTarget: target.(Repository).update: db.DoTx: target.(Repository).update: db.Update: name must not be empty: not null constraint violated: integrity violation: error #1001",
 		},
-		{
+		{ // TODO: Test Static Address
 			name: "null-description",
 			args: args{
 				name:           "null-description",
@@ -255,6 +271,18 @@ func TestRepository_UpdateTcpTarget(t *testing.T) {
 			newTargetOpts:  []target.Option{target.WithDescription("null-description" + id)},
 			wantErr:        false,
 			wantRowsUpdate: 1,
+		},
+		{
+			name: "with-address-update-name",
+			args: args{
+				name:           "foo",
+				fieldMaskPaths: []string{"Name"},
+				ProjectId:      proj.PublicId,
+			},
+			newProjectId:   proj.PublicId,
+			newTargetOpts:  []target.Option{target.WithAddress("0.0.0.0")},
+			wantErr:        false,
+			wantRowsUpdate: 0,
 		},
 		{
 			name: "empty-field-mask",
@@ -410,7 +438,7 @@ func TestRepository_UpdateTcpTarget(t *testing.T) {
 				ut.PublicId = *tt.args.PublicId
 			}
 
-			targetAfterUpdate, hostSources, credSources, updatedRows, err := repo.UpdateTarget(ctx, updateTarget, tar.GetVersion(), tt.args.fieldMaskPaths, tt.args.opt...)
+			targetAfterUpdate, staticAddress, hostSources, credSources, updatedRows, err := repo.UpdateTarget(ctx, updateTarget, tar.GetVersion(), tt.args.fieldMaskPaths, tt.args.opt...)
 			if tt.wantErr {
 				assert.Error(err)
 				assert.True(errors.Match(errors.T(tt.wantIsError), err))
@@ -443,9 +471,10 @@ func TestRepository_UpdateTcpTarget(t *testing.T) {
 			default:
 				assert.NotEqual(tar.GetUpdateTime(), targetAfterUpdate.GetUpdateTime())
 			}
-			foundTarget, _, _, err := repo.LookupTarget(context.Background(), tar.GetPublicId())
+			foundTarget, foundStaticAddress, _, _, err := repo.LookupTarget(context.Background(), tar.GetPublicId())
 			assert.NoError(err)
 			assert.True(proto.Equal(targetAfterUpdate.((*tcp.Target)), foundTarget.((*tcp.Target))))
+			assert.Equal(staticAddress, foundStaticAddress)
 			underlyingDB, err := conn.SqlDB(ctx)
 			require.NoError(err)
 			dbassert := dbassert.New(t, underlyingDB)

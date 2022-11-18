@@ -263,7 +263,7 @@ func TestRepository_AddTargetCredentialSources(t *testing.T) {
 			err = db.TestVerifyOplog(t, rw, projTarget.GetPublicId(), db.WithOperation(oplog.OpType_OP_TYPE_UPDATE), db.WithCreateNotBefore(10*time.Second))
 			assert.NoError(err)
 
-			tar, _, lookupCredSources, err := repo.LookupTarget(context.Background(), projTarget.GetPublicId())
+			tar, _, _, lookupCredSources, err := repo.LookupTarget(context.Background(), projTarget.GetPublicId())
 			require.NoError(err)
 			assert.Equal(tt.args.targetVersion+1, tar.GetVersion())
 			assert.Equal(projTarget.GetVersion(), tar.GetVersion()-1)
@@ -310,7 +310,7 @@ func TestRepository_AddTargetCredentialSources(t *testing.T) {
 		assert.True(errors.Match(errors.T(errors.NotUnique), err))
 
 		// Previous transactions should have been rolled back and only lib1 should be associated
-		_, _, lookupCredSources, err := repo.LookupTarget(ctx, projTarget.GetPublicId())
+		_, _, _, lookupCredSources, err := repo.LookupTarget(ctx, projTarget.GetPublicId())
 		require.NoError(err)
 		assert.Len(lookupCredSources, 1)
 		assert.Equal(lib1.PublicId, lookupCredSources[0].Id())
@@ -551,7 +551,7 @@ func TestRepository_DeleteTargetCredentialSources(t *testing.T) {
 		assert.Equal(0, delCount)
 
 		// Previous transactions should have been rolled back and only lib1 should be associated
-		_, _, lookupCredSources, err := repo.LookupTarget(ctx, projTarget.GetPublicId())
+		_, _, _, lookupCredSources, err := repo.LookupTarget(ctx, projTarget.GetPublicId())
 		require.NoError(err)
 		assert.Len(lookupCredSources, 2)
 	})
@@ -766,7 +766,7 @@ func TestRepository_SetTargetCredentialSources(t *testing.T) {
 				}
 			}
 
-			origTarget, _, lookupCredSources, err := repo.LookupTarget(ctx, tar.GetPublicId())
+			origTarget, _, _, lookupCredSources, err := repo.LookupTarget(ctx, tar.GetPublicId())
 			require.NoError(err)
 			assert.Equal(origCredSources, lookupCredSources)
 
@@ -788,7 +788,7 @@ func TestRepository_SetTargetCredentialSources(t *testing.T) {
 				assert.Equal(w.CredentialPurpose(), cs.CredentialPurpose())
 			}
 
-			foundTarget, _, _, err := repo.LookupTarget(ctx, tar.GetPublicId())
+			foundTarget, _, _, _, err := repo.LookupTarget(ctx, tar.GetPublicId())
 			require.NoError(err)
 			if tt.name != "no-change" {
 				assert.Equalf(tt.args.targetVersion+1, foundTarget.GetVersion(), "%s unexpected version: %d/%d", tt.name, tt.args.targetVersion+1, foundTarget.GetVersion())

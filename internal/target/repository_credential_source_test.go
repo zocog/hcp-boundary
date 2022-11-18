@@ -263,7 +263,7 @@ func TestRepository_SetTargetCredentialSources(t *testing.T) {
 				}
 			}
 
-			origTarget, _, lookupCredSources, err := repo.LookupTarget(ctx, tar.GetPublicId())
+			origTarget, _, _, lookupCredSources, err := repo.LookupTarget(ctx, tar.GetPublicId())
 			require.NoError(err)
 			assert.Equal(origCredSources, lookupCredSources)
 
@@ -285,7 +285,7 @@ func TestRepository_SetTargetCredentialSources(t *testing.T) {
 				assert.Equal(w.CredentialPurpose(), cs.CredentialPurpose())
 			}
 
-			foundTarget, _, _, err := repo.LookupTarget(ctx, tar.GetPublicId())
+			foundTarget, _, _, _, err := repo.LookupTarget(ctx, tar.GetPublicId())
 			require.NoError(err)
 			if tt.name != "no-change" {
 				assert.Equalf(tt.args.targetVersion+1, foundTarget.GetVersion(), "%s unexpected version: %d/%d", tt.name, tt.args.targetVersion+1, foundTarget.GetVersion())

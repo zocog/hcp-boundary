@@ -100,7 +100,7 @@ func TestRepository_AddTargetHostSets(t *testing.T) {
 			projTarget := tcp.TestTarget(ctx, t, conn, staticProj.PublicId, "static-proj")
 
 			var hostSourceIds []string
-			origTarget, origHostSet, _, err := repo.LookupTarget(ctx, projTarget.GetPublicId())
+			origTarget, _, origHostSet, _, err := repo.LookupTarget(ctx, projTarget.GetPublicId())
 			require.NoError(err)
 			require.Equal(0, len(origHostSet))
 
@@ -146,7 +146,7 @@ func TestRepository_AddTargetHostSets(t *testing.T) {
 			err = db.TestVerifyOplog(t, rw, projTarget.GetPublicId(), db.WithOperation(oplog.OpType_OP_TYPE_UPDATE), db.WithCreateNotBefore(10*time.Second))
 			assert.NoError(err)
 
-			tar, ths, _, err := repo.LookupTarget(ctx, projTarget.GetPublicId())
+			tar, _, ths, _, err := repo.LookupTarget(ctx, projTarget.GetPublicId())
 			require.NoError(err)
 			assert.Equal(tt.args.targetVersion+1, tar.GetVersion())
 			assert.Equal(origTarget.GetVersion(), tar.GetVersion()-1)
@@ -184,7 +184,7 @@ func TestRepository_AddTargetHostSets(t *testing.T) {
 		assert.True(errors.Match(errors.T(errors.NotUnique), err))
 
 		// Previous transactions should have been rolled back and only hs1 should be associated
-		_, gotHostSources, _, err = repo.LookupTarget(ctx, projTarget.GetPublicId())
+		_, _, gotHostSources, _, err = repo.LookupTarget(ctx, projTarget.GetPublicId())
 		require.NoError(err)
 		assert.Len(gotHostSources, 1)
 		assert.Equal(hs1.PublicId, gotHostSources[0].Id())
@@ -392,7 +392,7 @@ func TestRepository_DeleteTargetHosts(t *testing.T) {
 		assert.Equal(0, delCount)
 
 		// Previous transactions should have been rolled back
-		_, gotHostSources, _, err = repo.LookupTarget(ctx, projTarget.GetPublicId())
+		_, _, gotHostSources, _, err = repo.LookupTarget(ctx, projTarget.GetPublicId())
 		require.NoError(err)
 		assert.Len(gotHostSources, 2)
 	})
@@ -523,7 +523,7 @@ func TestRepository_SetTargetHostSets(t *testing.T) {
 				}
 				tt.args.hostSourceIds = append(tt.args.hostSourceIds, origIds...)
 			}
-			origTarget, lookedUpHs, _, err := repo.LookupTarget(context.Background(), tt.args.target.GetPublicId())
+			origTarget, _, lookedUpHs, _, err := repo.LookupTarget(context.Background(), tt.args.target.GetPublicId())
 			require.NoError(err)
 			assert.Equal(len(origHostSources), len(lookedUpHs))
 
@@ -552,7 +552,7 @@ func TestRepository_SetTargetHostSets(t *testing.T) {
 			sort.Strings(gotIds)
 			assert.Equal(wantIds, gotIds)
 
-			foundTarget, _, _, err := repo.LookupTarget(context.Background(), tt.args.target.GetPublicId())
+			foundTarget, _, _, _, err := repo.LookupTarget(context.Background(), tt.args.target.GetPublicId())
 			require.NoError(err)
 			if tt.name != "no-change" {
 				assert.Equalf(tt.args.targetVersion+1, foundTarget.GetVersion(), "%s unexpected version: %d/%d", tt.name, tt.args.targetVersion+1, foundTarget.GetVersion())

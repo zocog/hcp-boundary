@@ -126,7 +126,7 @@ func TestRepository_LookupTarget(t *testing.T) {
 			if tt.projectName != "" {
 				opts = append(opts, target.WithProjectName(tt.projectName))
 			}
-			got, _, _, err := repo.LookupTarget(ctx, id, opts...)
+			got, _, _, _, err := repo.LookupTarget(ctx, id, opts...)
 			if tt.wantErr {
 				require.Error(err)
 				return
@@ -258,7 +258,7 @@ func TestRepository_DeleteTarget(t *testing.T) {
 			}
 			assert.NoError(err)
 			assert.Equal(tt.wantRowsDeleted, deletedRows)
-			foundGroup, _, _, err := repo.LookupTarget(ctx, tt.args.target.GetPublicId())
+			foundGroup, _, _, _, err := repo.LookupTarget(ctx, tt.args.target.GetPublicId())
 			assert.NoError(err)
 			assert.Nil(foundGroup)
 
