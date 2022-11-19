@@ -456,11 +456,11 @@ func (b *Server) CreateInitialTarget(ctx context.Context) (target.Target, error)
 	if err != nil {
 		return nil, fmt.Errorf("error creating in memory target: %w", err)
 	}
-	tt, _, _, err := targetRepo.CreateTarget(ctx, t, opts...)
+	tt, _, _, _, err := targetRepo.CreateTarget(ctx, t, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error saving target to the db: %w", err)
 	}
-	tt, _, _, err = targetRepo.AddTargetHostSources(ctx, tt.GetPublicId(), tt.GetVersion(), []string{b.DevHostSetId})
+	tt, _, _, _, err = targetRepo.AddTargetHostSources(ctx, tt.GetPublicId(), tt.GetVersion(), []string{b.DevHostSetId})
 	if err != nil {
 		return nil, fmt.Errorf("error saving target to the db: %w", err)
 	}
