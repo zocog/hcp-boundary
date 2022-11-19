@@ -108,7 +108,7 @@ func TestRepository_AddTargetHostSets(t *testing.T) {
 				hostSourceIds = createHostSetsFn([]string{staticProj.PublicId})
 			}
 
-			gotTarget, gotHostSources, _, err := repo.AddTargetHostSources(ctx, projTarget.GetPublicId(), tt.args.targetVersion, hostSourceIds, tt.args.opt...)
+			gotTarget, _, gotHostSources, _, err := repo.AddTargetHostSources(ctx, projTarget.GetPublicId(), tt.args.targetVersion, hostSourceIds, tt.args.opt...)
 			if tt.wantErr {
 				require.Error(err)
 				if tt.wantErrIs != nil {
@@ -168,18 +168,18 @@ func TestRepository_AddTargetHostSets(t *testing.T) {
 
 		ctx := context.Background()
 		projTarget := tcp.TestTarget(ctx, t, conn, staticProj.PublicId, "add-existing")
-		_, gotHostSources, _, err := repo.AddTargetHostSources(ctx, projTarget.GetPublicId(), 1, []string{hs1.PublicId})
+		_, _, gotHostSources, _, err := repo.AddTargetHostSources(ctx, projTarget.GetPublicId(), 1, []string{hs1.PublicId})
 		require.NoError(err)
 		assert.Len(gotHostSources, 1)
 		assert.Equal(hs1.PublicId, gotHostSources[0].Id())
 
 		// Adding hs1 again should error
-		_, _, _, err = repo.AddTargetHostSources(ctx, projTarget.GetPublicId(), 2, []string{hs1.PublicId})
+		_, _, _, _, err = repo.AddTargetHostSources(ctx, projTarget.GetPublicId(), 2, []string{hs1.PublicId})
 		require.Error(err)
 		assert.True(errors.Match(errors.T(errors.NotUnique), err))
 
 		// Adding multiple with hs1 in set should error
-		_, _, _, err = repo.AddTargetHostSources(ctx, projTarget.GetPublicId(), 2, []string{hs3.PublicId, hs2.PublicId, hs1.PublicId})
+		_, _, _, _, err = repo.AddTargetHostSources(ctx, projTarget.GetPublicId(), 2, []string{hs3.PublicId, hs2.PublicId, hs1.PublicId})
 		require.Error(err)
 		assert.True(errors.Match(errors.T(errors.NotUnique), err))
 
@@ -307,7 +307,7 @@ func TestRepository_DeleteTargetHosts(t *testing.T) {
 					hsIds = append(hsIds, hsets[0].PublicId)
 				}
 			}
-			_, addedHostSources, _, err := repo.AddTargetHostSources(context.Background(), tt.args.target.GetPublicId(), 1, hsIds, tt.args.opt...)
+			_, _, addedHostSources, _, err := repo.AddTargetHostSources(context.Background(), tt.args.target.GetPublicId(), 1, hsIds, tt.args.opt...)
 			require.NoError(err)
 			assert.Equal(tt.args.createCnt, len(addedHostSources))
 
@@ -374,7 +374,7 @@ func TestRepository_DeleteTargetHosts(t *testing.T) {
 
 		ctx := context.Background()
 		projTarget := tcp.TestTarget(ctx, t, conn, proj.PublicId, "delete-unassociated")
-		_, gotHostSources, _, err := repo.AddTargetHostSources(ctx, projTarget.GetPublicId(), 1, []string{hs1.PublicId, hs2.PublicId})
+		_, _, gotHostSources, _, err := repo.AddTargetHostSources(ctx, projTarget.GetPublicId(), 1, []string{hs1.PublicId, hs2.PublicId})
 		require.NoError(err)
 		assert.Len(gotHostSources, 2)
 		assert.Equal(hs1.PublicId, gotHostSources[0].Id())
@@ -431,7 +431,7 @@ func TestRepository_SetTargetHostSets(t *testing.T) {
 
 	setupFn := func(target target.Target) []target.HostSource {
 		hs := createHostSetsFn()
-		_, created, _, err := repo.AddTargetHostSources(context.Background(), target.GetPublicId(), 1, hs)
+		_, _, created, _, err := repo.AddTargetHostSources(context.Background(), target.GetPublicId(), 1, hs)
 		require.NoError(t, err)
 		require.Equal(t, 10, len(created))
 		return created

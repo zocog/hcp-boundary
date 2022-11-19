@@ -243,7 +243,7 @@ func TestRepository_AddTargetCredentialSources(t *testing.T) {
 			ctx := context.Background()
 			projTarget := tcp.TestTarget(ctx, t, conn, staticProj.PublicId, tt.name)
 
-			gotTarget, _, gotCredSources, err := repo.AddTargetCredentialSources(context.Background(), projTarget.GetPublicId(), tt.args.targetVersion, tt.args.ids)
+			gotTarget, _, _, gotCredSources, err := repo.AddTargetCredentialSources(context.Background(), projTarget.GetPublicId(), tt.args.targetVersion, tt.args.ids)
 			if tt.wantErr {
 				require.Error(err)
 				assert.Truef(errors.Match(errors.T(tt.wantErrCode), err), "unexpected error %s", err.Error())
@@ -288,7 +288,7 @@ func TestRepository_AddTargetCredentialSources(t *testing.T) {
 		ids := target.CredentialSources{
 			BrokeredCredentialIds: []string{lib1.PublicId},
 		}
-		_, _, gotCredSources, err := repo.AddTargetCredentialSources(ctx, projTarget.GetPublicId(), 1, ids)
+		_, _, _, gotCredSources, err := repo.AddTargetCredentialSources(ctx, projTarget.GetPublicId(), 1, ids)
 		require.NoError(err)
 		assert.Len(gotCredSources, 1)
 		assert.Equal(lib1.PublicId, gotCredSources[0].Id())
@@ -297,7 +297,7 @@ func TestRepository_AddTargetCredentialSources(t *testing.T) {
 		ids = target.CredentialSources{
 			BrokeredCredentialIds: []string{lib1.PublicId},
 		}
-		_, _, _, err = repo.AddTargetCredentialSources(ctx, projTarget.GetPublicId(), 2, ids)
+		_, _, _, _, err = repo.AddTargetCredentialSources(ctx, projTarget.GetPublicId(), 2, ids)
 		require.Error(err)
 		assert.True(errors.Match(errors.T(errors.NotUnique), err))
 
@@ -305,7 +305,7 @@ func TestRepository_AddTargetCredentialSources(t *testing.T) {
 		ids = target.CredentialSources{
 			BrokeredCredentialIds: []string{lib3.PublicId, lib2.PublicId, lib1.PublicId},
 		}
-		_, _, _, err = repo.AddTargetCredentialSources(ctx, projTarget.GetPublicId(), 2, ids)
+		_, _, _, _, err = repo.AddTargetCredentialSources(ctx, projTarget.GetPublicId(), 2, ids)
 		require.Error(err)
 		assert.True(errors.Match(errors.T(errors.NotUnique), err))
 
@@ -321,7 +321,7 @@ func TestRepository_AddTargetCredentialSources(t *testing.T) {
 		ids := target.CredentialSources{
 			BrokeredCredentialIds: []string{lib1.PublicId},
 		}
-		_, _, _, err := repo.AddTargetCredentialSources(context.Background(), "fake-target-id", 1, ids)
+		_, _, _, _, err := repo.AddTargetCredentialSources(context.Background(), "fake-target-id", 1, ids)
 
 		require.Error(err)
 		assert.Truef(errors.Match(errors.T(errors.RecordNotFound), err), "unexpected error %s", err.Error())
@@ -470,7 +470,7 @@ func TestRepository_DeleteTargetCredentialSources(t *testing.T) {
 				ids.BrokeredCredentialIds = append(ids.BrokeredCredentialIds, c.GetPublicId())
 			}
 
-			_, _, addedCredSources, err := repo.AddTargetCredentialSources(ctx, tar.GetPublicId(), 1, ids)
+			_, _, _, addedCredSources, err := repo.AddTargetCredentialSources(ctx, tar.GetPublicId(), 1, ids)
 			require.NoError(err)
 			assert.Equal(tt.args.createLibCnt+tt.args.createStaticCnt, len(addedCredSources))
 
@@ -528,7 +528,7 @@ func TestRepository_DeleteTargetCredentialSources(t *testing.T) {
 		ids := target.CredentialSources{
 			BrokeredCredentialIds: []string{lib1.GetPublicId(), lib2.GetPublicId()},
 		}
-		_, _, gotCredSources, err := repo.AddTargetCredentialSources(ctx, projTarget.GetPublicId(), 1, ids)
+		_, _, _, gotCredSources, err := repo.AddTargetCredentialSources(ctx, projTarget.GetPublicId(), 1, ids)
 		require.NoError(err)
 		assert.Len(gotCredSources, 2)
 
@@ -590,7 +590,7 @@ func TestRepository_SetTargetCredentialSources(t *testing.T) {
 			ids.BrokeredCredentialIds = append(ids.BrokeredCredentialIds, cred.GetPublicId())
 		}
 
-		_, _, created, err := repo.AddTargetCredentialSources(context.Background(), tar.GetPublicId(), 1, ids)
+		_, _, _, created, err := repo.AddTargetCredentialSources(context.Background(), tar.GetPublicId(), 1, ids)
 		require.NoError(t, err)
 		require.Equal(t, 10, len(created))
 		return created, ids

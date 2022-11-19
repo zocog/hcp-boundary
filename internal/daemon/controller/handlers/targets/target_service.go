@@ -231,7 +231,7 @@ func (s Service) ListTargets(ctx context.Context, req *pbs.ListTargetsRequest) (
 			outputOpts = append(outputOpts, handlers.WithAuthorizedActions(authorizedActions))
 		}
 
-		item, err := toProto(ctx, item, nil, nil, outputOpts...)
+		item, err := toProto(ctx, item, nil, nil, nil, outputOpts...)
 		if err != nil {
 			return nil, err
 		}
@@ -259,7 +259,7 @@ func (s Service) GetTarget(ctx context.Context, req *pbs.GetTargetRequest) (*pbs
 	if authResults.Error != nil {
 		return nil, authResults.Error
 	}
-	t, ts, cl, err := s.getFromRepo(ctx, req.GetId())
+	t, ta, ts, cl, err := s.getFromRepo(ctx, req.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +278,7 @@ func (s Service) GetTarget(ctx context.Context, req *pbs.GetTargetRequest) (*pbs
 		outputOpts = append(outputOpts, handlers.WithAuthorizedActions(authResults.FetchActionSetForId(ctx, t.GetPublicId(), IdActions).Strings()))
 	}
 
-	item, err := toProto(ctx, t, ts, cl, outputOpts...)
+	item, err := toProto(ctx, t, ta, ts, cl, outputOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +297,7 @@ func (s Service) CreateTarget(ctx context.Context, req *pbs.CreateTargetRequest)
 	if authResults.Error != nil {
 		return nil, authResults.Error
 	}
-	t, ts, cl, err := s.createInRepo(ctx, req.GetItem())
+	t, ta, ts, cl, err := s.createInRepo(ctx, req.GetItem())
 	if err != nil {
 		return nil, err
 	}
@@ -316,7 +316,7 @@ func (s Service) CreateTarget(ctx context.Context, req *pbs.CreateTargetRequest)
 		outputOpts = append(outputOpts, handlers.WithAuthorizedActions(authResults.FetchActionSetForId(ctx, t.GetPublicId(), IdActions).Strings()))
 	}
 
-	item, err := toProto(ctx, t, ts, cl, outputOpts...)
+	item, err := toProto(ctx, t, ta, ts, cl, outputOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +335,7 @@ func (s Service) UpdateTarget(ctx context.Context, req *pbs.UpdateTargetRequest)
 	if authResults.Error != nil {
 		return nil, authResults.Error
 	}
-	t, ts, cl, err := s.updateInRepo(ctx, authResults.Scope.GetId(), req.GetId(), req.GetUpdateMask().GetPaths(), req.GetItem())
+	t, ta, ts, cl, err := s.updateInRepo(ctx, authResults.Scope.GetId(), req.GetId(), req.GetUpdateMask().GetPaths(), req.GetItem())
 	if err != nil {
 		return nil, err
 	}
@@ -354,7 +354,7 @@ func (s Service) UpdateTarget(ctx context.Context, req *pbs.UpdateTargetRequest)
 		outputOpts = append(outputOpts, handlers.WithAuthorizedActions(authResults.FetchActionSetForId(ctx, t.GetPublicId(), IdActions).Strings()))
 	}
 
-	item, err := toProto(ctx, t, ts, cl, outputOpts...)
+	item, err := toProto(ctx, t, ta, ts, cl, outputOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -389,7 +389,7 @@ func (s Service) AddTargetHostSources(ctx context.Context, req *pbs.AddTargetHos
 	if authResults.Error != nil {
 		return nil, authResults.Error
 	}
-	t, ts, cl, err := s.addHostSourcesInRepo(ctx, req.GetId(), req.GetHostSourceIds(), req.GetVersion())
+	t, ta, ts, cl, err := s.addHostSourcesInRepo(ctx, req.GetId(), req.GetHostSourceIds(), req.GetVersion())
 	if err != nil {
 		return nil, err
 	}
@@ -408,7 +408,7 @@ func (s Service) AddTargetHostSources(ctx context.Context, req *pbs.AddTargetHos
 		outputOpts = append(outputOpts, handlers.WithAuthorizedActions(authResults.FetchActionSetForId(ctx, t.GetPublicId(), IdActions).Strings()))
 	}
 
-	item, err := toProto(ctx, t, ts, cl, outputOpts...)
+	item, err := toProto(ctx, t, ta, ts, cl, outputOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -427,7 +427,7 @@ func (s Service) SetTargetHostSources(ctx context.Context, req *pbs.SetTargetHos
 	if authResults.Error != nil {
 		return nil, authResults.Error
 	}
-	t, ts, cl, err := s.setHostSourcesInRepo(ctx, req.GetId(), req.GetHostSourceIds(), req.GetVersion())
+	t, ta, ts, cl, err := s.setHostSourcesInRepo(ctx, req.GetId(), req.GetHostSourceIds(), req.GetVersion())
 	if err != nil {
 		return nil, err
 	}
@@ -446,7 +446,7 @@ func (s Service) SetTargetHostSources(ctx context.Context, req *pbs.SetTargetHos
 		outputOpts = append(outputOpts, handlers.WithAuthorizedActions(authResults.FetchActionSetForId(ctx, t.GetPublicId(), IdActions).Strings()))
 	}
 
-	item, err := toProto(ctx, t, ts, cl, outputOpts...)
+	item, err := toProto(ctx, t, ta, ts, cl, outputOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -465,7 +465,7 @@ func (s Service) RemoveTargetHostSources(ctx context.Context, req *pbs.RemoveTar
 	if authResults.Error != nil {
 		return nil, authResults.Error
 	}
-	t, ts, cl, err := s.removeHostSourcesInRepo(ctx, req.GetId(), req.GetHostSourceIds(), req.GetVersion())
+	t, ta, ts, cl, err := s.removeHostSourcesInRepo(ctx, req.GetId(), req.GetHostSourceIds(), req.GetVersion())
 	if err != nil {
 		return nil, err
 	}
@@ -484,7 +484,7 @@ func (s Service) RemoveTargetHostSources(ctx context.Context, req *pbs.RemoveTar
 		outputOpts = append(outputOpts, handlers.WithAuthorizedActions(authResults.FetchActionSetForId(ctx, t.GetPublicId(), IdActions).Strings()))
 	}
 
-	item, err := toProto(ctx, t, ts, cl, outputOpts...)
+	item, err := toProto(ctx, t, ta, ts, cl, outputOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -505,7 +505,7 @@ func (s Service) AddTargetCredentialSources(ctx context.Context, req *pbs.AddTar
 	}
 
 	brokeredCredentialSources := strutil.MergeSlices(req.GetApplicationCredentialSourceIds(), req.GetBrokeredCredentialSourceIds())
-	t, ts, cl, err := s.addCredentialSourcesInRepo(ctx, req.GetId(), brokeredCredentialSources, req.GetInjectedApplicationCredentialSourceIds(), req.GetVersion())
+	t, ta, ts, cl, err := s.addCredentialSourcesInRepo(ctx, req.GetId(), brokeredCredentialSources, req.GetInjectedApplicationCredentialSourceIds(), req.GetVersion())
 	if err != nil {
 		return nil, err
 	}
@@ -524,7 +524,7 @@ func (s Service) AddTargetCredentialSources(ctx context.Context, req *pbs.AddTar
 		outputOpts = append(outputOpts, handlers.WithAuthorizedActions(authResults.FetchActionSetForId(ctx, t.GetPublicId(), IdActions).Strings()))
 	}
 
-	item, err := toProto(ctx, t, ts, cl, outputOpts...)
+	item, err := toProto(ctx, t, ta, ts, cl, outputOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -545,7 +545,7 @@ func (s Service) SetTargetCredentialSources(ctx context.Context, req *pbs.SetTar
 	}
 
 	brokeredCredentialSources := strutil.MergeSlices(req.GetApplicationCredentialSourceIds(), req.GetBrokeredCredentialSourceIds())
-	t, ts, cl, err := s.setCredentialSourcesInRepo(ctx, req.GetId(), brokeredCredentialSources, req.GetInjectedApplicationCredentialSourceIds(), req.GetVersion())
+	t, ta, ts, cl, err := s.setCredentialSourcesInRepo(ctx, req.GetId(), brokeredCredentialSources, req.GetInjectedApplicationCredentialSourceIds(), req.GetVersion())
 	if err != nil {
 		return nil, err
 	}
@@ -564,7 +564,7 @@ func (s Service) SetTargetCredentialSources(ctx context.Context, req *pbs.SetTar
 		outputOpts = append(outputOpts, handlers.WithAuthorizedActions(authResults.FetchActionSetForId(ctx, t.GetPublicId(), IdActions).Strings()))
 	}
 
-	item, err := toProto(ctx, t, ts, cl, outputOpts...)
+	item, err := toProto(ctx, t, ta, ts, cl, outputOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -585,7 +585,7 @@ func (s Service) RemoveTargetCredentialSources(ctx context.Context, req *pbs.Rem
 	}
 
 	brokeredCredentialSources := strutil.MergeSlices(req.GetApplicationCredentialSourceIds(), req.GetBrokeredCredentialSourceIds())
-	t, ts, cl, err := s.removeCredentialSourcesInRepo(ctx, req.GetId(), brokeredCredentialSources, req.GetInjectedApplicationCredentialSourceIds(), req.GetVersion())
+	t, ta, ts, cl, err := s.removeCredentialSourcesInRepo(ctx, req.GetId(), brokeredCredentialSources, req.GetInjectedApplicationCredentialSourceIds(), req.GetVersion())
 	if err != nil {
 		return nil, err
 	}
@@ -604,7 +604,7 @@ func (s Service) RemoveTargetCredentialSources(ctx context.Context, req *pbs.Rem
 		outputOpts = append(outputOpts, handlers.WithAuthorizedActions(authResults.FetchActionSetForId(ctx, t.GetPublicId(), IdActions).Strings()))
 	}
 
-	item, err := toProto(ctx, t, ts, cl, outputOpts...)
+	item, err := toProto(ctx, t, ta, ts, cl, outputOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -660,7 +660,7 @@ func (s Service) AuthorizeSession(ctx context.Context, req *pbs.AuthorizeSession
 	if err != nil {
 		return nil, err
 	}
-	t, hostSources, credSources, err := repo.LookupTarget(ctx, t.GetPublicId())
+	t, staticAddress, hostSources, credSources, err := repo.LookupTarget(ctx, t.GetPublicId())
 	if err != nil {
 		if errors.IsNotFoundError(err) {
 			return nil, handlers.NotFoundErrorf("Target %q not found.", t.GetPublicId())
@@ -970,25 +970,25 @@ func (s Service) AuthorizeSession(ctx context.Context, req *pbs.AuthorizeSession
 	return &pbs.AuthorizeSessionResponse{Item: ret}, nil
 }
 
-func (s Service) getFromRepo(ctx context.Context, id string) (target.Target, []target.HostSource, []target.CredentialSource, error) {
+func (s Service) getFromRepo(ctx context.Context, id string) (target.Target, target.StaticAddress, []target.HostSource, []target.CredentialSource, error) {
 	repo, err := s.repoFn()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
-	u, hs, cl, err := repo.LookupTarget(ctx, id)
+	t, ta, hs, cl, err := repo.LookupTarget(ctx, id)
 	if err != nil {
 		if errors.IsNotFoundError(err) {
-			return nil, nil, nil, handlers.NotFoundErrorf("Target %q doesn't exist.", id)
+			return nil, nil, nil, nil, handlers.NotFoundErrorf("Target %q doesn't exist.", id)
 		}
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
-	if u == nil {
-		return nil, nil, nil, handlers.NotFoundErrorf("Target %q doesn't exist.", id)
+	if t == nil {
+		return nil, nil, nil, nil, handlers.NotFoundErrorf("Target %q doesn't exist.", id)
 	}
-	return u, hs, cl, nil
+	return t, ta, hs, cl, nil
 }
 
-func (s Service) createInRepo(ctx context.Context, item *pb.Target) (target.Target, []target.HostSource, []target.CredentialSource, error) {
+func (s Service) createInRepo(ctx context.Context, item *pb.Target) (target.Target, target.StaticAddress, []target.HostSource, []target.CredentialSource, error) {
 	const op = "targets.(Service).createInRepo"
 	opts := []target.Option{target.WithName(item.GetName().GetValue())}
 	if item.GetDescription() != nil {
@@ -1009,29 +1009,29 @@ func (s Service) createInRepo(ctx context.Context, item *pb.Target) (target.Targ
 
 	attr, err := subtypeRegistry.newAttribute(target.SubtypeFromType(item.GetType()), item.GetAttrs())
 	if err != nil {
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.InvalidArgument, err.Error())
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.InvalidArgument, err.Error())
 	}
 	opts = append(opts, attr.Options()...)
 
 	u, err := target.New(ctx, target.SubtypeFromType(item.GetType()), item.GetScopeId(), opts...)
 	if err != nil {
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to build target for creation: %v.", err)
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to build target for creation: %v.", err)
 	}
 	repo, err := s.repoFn()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
-	out, hs, cl, err := repo.CreateTarget(ctx, u)
+	out, ta, hs, cl, err := repo.CreateTarget(ctx, u)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to create target"))
+		return nil, nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to create target"))
 	}
 	if out == nil {
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to create target but no error returned from repository.")
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to create target but no error returned from repository.")
 	}
-	return out, hs, cl, nil
+	return out, ta, hs, cl, nil
 }
 
-func (s Service) updateInRepo(ctx context.Context, scopeId, id string, mask []string, item *pb.Target) (target.Target, []target.HostSource, []target.CredentialSource, error) {
+func (s Service) updateInRepo(ctx context.Context, scopeId, id string, mask []string, item *pb.Target) (target.Target, target.StaticAddress, []target.HostSource, []target.CredentialSource, error) {
 	const op = "targets.(Service).updateInRepo"
 	var opts []target.Option
 	if desc := item.GetDescription(); desc != nil {
@@ -1053,7 +1053,7 @@ func (s Service) updateInRepo(ctx context.Context, scopeId, id string, mask []st
 
 	attr, err := subtypeRegistry.newAttribute(subtype, item.GetAttrs())
 	if err != nil {
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.InvalidArgument, err.Error())
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.InvalidArgument, err.Error())
 	}
 
 	opts = append(opts, attr.Options()...)
@@ -1062,33 +1062,33 @@ func (s Service) updateInRepo(ctx context.Context, scopeId, id string, mask []st
 
 	u, err := target.New(ctx, subtype, scopeId, opts...)
 	if err != nil {
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to build target for update: %v.", err)
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to build target for update: %v.", err)
 	}
 	if err := u.SetPublicId(ctx, id); err != nil {
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to set target id: %v.", err)
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to set target id: %v.", err)
 	}
 
 	maskManager, err := subtypeRegistry.maskManager(subtype)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to update target"))
+		return nil, nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to update target"))
 	}
 
 	dbMask := maskManager.Translate(mask)
 	if len(dbMask) == 0 {
-		return nil, nil, nil, handlers.InvalidArgumentErrorf("No valid fields included in the update mask.", map[string]string{"update_mask": "No valid paths provided in the update mask."})
+		return nil, nil, nil, nil, handlers.InvalidArgumentErrorf("No valid fields included in the update mask.", map[string]string{"update_mask": "No valid paths provided in the update mask."})
 	}
 	repo, err := s.repoFn()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
-	out, hs, cl, rowsUpdated, err := repo.UpdateTarget(ctx, u, version, dbMask)
+	out, ta, hs, cl, rowsUpdated, err := repo.UpdateTarget(ctx, u, version, dbMask)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to update target"))
+		return nil, nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to update target"))
 	}
 	if rowsUpdated == 0 {
-		return nil, nil, nil, handlers.NotFoundErrorf("Target %q not found or incorrect version provided.", id)
+		return nil, nil, nil, nil, handlers.NotFoundErrorf("Target %q not found or incorrect version provided.", id)
 	}
-	return out, hs, cl, nil
+	return out, ta, hs, cl, nil
 }
 
 func (s Service) deleteFromRepo(ctx context.Context, id string) (bool, error) {
@@ -1119,69 +1119,69 @@ func (s Service) listFromRepo(ctx context.Context, perms []perms.Permission) ([]
 	return ul, nil
 }
 
-func (s Service) addHostSourcesInRepo(ctx context.Context, targetId string, hostSourceIds []string, version uint32) (target.Target, []target.HostSource, []target.CredentialSource, error) {
+func (s Service) addHostSourcesInRepo(ctx context.Context, targetId string, hostSourceIds []string, version uint32) (target.Target, target.StaticAddress, []target.HostSource, []target.CredentialSource, error) {
 	repo, err := s.repoFn()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
-	out, hs, cl, err := repo.AddTargetHostSources(ctx, targetId, version, strutil.RemoveDuplicates(hostSourceIds, false))
+	out, ta, hs, cl, err := repo.AddTargetHostSources(ctx, targetId, version, strutil.RemoveDuplicates(hostSourceIds, false))
 	if err != nil {
 		// TODO: Figure out a way to surface more helpful error info beyond the Internal error.
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to add host sources to target: %v.", err)
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to add host sources to target: %v.", err)
 	}
 	if out == nil {
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to lookup target after adding host sources to it.")
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to lookup target after adding host sources to it.")
 	}
-	return out, hs, cl, nil
+	return out, ta, hs, cl, nil
 }
 
-func (s Service) setHostSourcesInRepo(ctx context.Context, targetId string, hostSourceIds []string, version uint32) (target.Target, []target.HostSource, []target.CredentialSource, error) {
+func (s Service) setHostSourcesInRepo(ctx context.Context, targetId string, hostSourceIds []string, version uint32) (target.Target, target.StaticAddress, []target.HostSource, []target.CredentialSource, error) {
 	const op = "targets.(Service).setSourcesInRepo"
 	repo, err := s.repoFn()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	_, _, _, err = repo.SetTargetHostSources(ctx, targetId, version, strutil.RemoveDuplicates(hostSourceIds, false))
 	if err != nil {
 		// TODO: Figure out a way to surface more helpful error info beyond the Internal error.
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to set host sources in target: %v.", err)
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to set host sources in target: %v.", err)
 	}
 
-	out, hs, cl, err := repo.LookupTarget(ctx, targetId)
+	out, ta, hs, cl, err := repo.LookupTarget(ctx, targetId)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to look up target after setting host sources"))
+		return nil, nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to look up target after setting host sources"))
 	}
 	if out == nil {
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to lookup target after setting host sources for it.")
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to lookup target after setting host sources for it.")
 	}
-	return out, hs, cl, nil
+	return out, ta, hs, cl, nil
 }
 
-func (s Service) removeHostSourcesInRepo(ctx context.Context, targetId string, hostSourceIds []string, version uint32) (target.Target, []target.HostSource, []target.CredentialSource, error) {
+func (s Service) removeHostSourcesInRepo(ctx context.Context, targetId string, hostSourceIds []string, version uint32) (target.Target, target.StaticAddress, []target.HostSource, []target.CredentialSource, error) {
 	const op = "targets.(Service).removeHostSourcesInRepo"
 	repo, err := s.repoFn()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	_, err = repo.DeleteTargetHostSources(ctx, targetId, version, strutil.RemoveDuplicates(hostSourceIds, false))
 	if err != nil {
 		// TODO: Figure out a way to surface more helpful error info beyond the Internal error.
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to remove host sources from target: %v.", err)
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to remove host sources from target: %v.", err)
 	}
-	out, hs, cl, err := repo.LookupTarget(ctx, targetId)
+	out, ta, hs, cl, err := repo.LookupTarget(ctx, targetId)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to look up target after removing host sources"))
+		return nil, nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to look up target after removing host sources"))
 	}
 	if out == nil {
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to lookup target after removing host sources from it.")
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to lookup target after removing host sources from it.")
 	}
-	return out, hs, cl, nil
+	return out, ta, hs, cl, nil
 }
 
-func (s Service) addCredentialSourcesInRepo(ctx context.Context, targetId string, brokeredIds []string, injectedAppIds []string, version uint32) (target.Target, []target.HostSource, []target.CredentialSource, error) {
+func (s Service) addCredentialSourcesInRepo(ctx context.Context, targetId string, brokeredIds []string, injectedAppIds []string, version uint32) (target.Target, target.StaticAddress, []target.HostSource, []target.CredentialSource, error) {
 	repo, err := s.repoFn()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	var creds target.CredentialSources
@@ -1192,22 +1192,22 @@ func (s Service) addCredentialSourcesInRepo(ctx context.Context, targetId string
 		creds.InjectedApplicationCredentialIds = strutil.RemoveDuplicates(injectedAppIds, false)
 	}
 
-	out, hs, credSources, err := repo.AddTargetCredentialSources(ctx, targetId, version, creds)
+	out, ta, hs, credSources, err := repo.AddTargetCredentialSources(ctx, targetId, version, creds)
 	if err != nil {
 		// TODO: Figure out a way to surface more helpful error info beyond the Internal error.
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to add credential sources to target: %v.", err)
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to add credential sources to target: %v.", err)
 	}
 	if out == nil {
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to lookup target after adding credential sources to it.")
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to lookup target after adding credential sources to it.")
 	}
-	return out, hs, credSources, nil
+	return out, ta, hs, credSources, nil
 }
 
-func (s Service) setCredentialSourcesInRepo(ctx context.Context, targetId string, brokeredIds []string, injectedAppIds []string, version uint32) (target.Target, []target.HostSource, []target.CredentialSource, error) {
+func (s Service) setCredentialSourcesInRepo(ctx context.Context, targetId string, brokeredIds []string, injectedAppIds []string, version uint32) (target.Target, target.StaticAddress, []target.HostSource, []target.CredentialSource, error) {
 	const op = "targets.(Service).setCredentialSourcesInRepo"
 	repo, err := s.repoFn()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	var ids target.CredentialSources
@@ -1221,24 +1221,24 @@ func (s Service) setCredentialSourcesInRepo(ctx context.Context, targetId string
 	_, _, _, err = repo.SetTargetCredentialSources(ctx, targetId, version, ids)
 	if err != nil {
 		// TODO: Figure out a way to surface more helpful error info beyond the Internal error.
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to set credential sources in target: %v.", err)
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to set credential sources in target: %v.", err)
 	}
 
-	out, hs, credSources, err := repo.LookupTarget(ctx, targetId)
+	out, ta, hs, credSources, err := repo.LookupTarget(ctx, targetId)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to look up target after setting credential sources"))
+		return nil, nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to look up target after setting credential sources"))
 	}
 	if out == nil {
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to lookup target after setting credential sources for it.")
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to lookup target after setting credential sources for it.")
 	}
-	return out, hs, credSources, nil
+	return out, ta, hs, credSources, nil
 }
 
-func (s Service) removeCredentialSourcesInRepo(ctx context.Context, targetId string, brokeredIds []string, injectedAppIds []string, version uint32) (target.Target, []target.HostSource, []target.CredentialSource, error) {
+func (s Service) removeCredentialSourcesInRepo(ctx context.Context, targetId string, brokeredIds []string, injectedAppIds []string, version uint32) (target.Target, target.StaticAddress, []target.HostSource, []target.CredentialSource, error) {
 	const op = "targets.(Service).removeCredentialSourcesInRepo"
 	repo, err := s.repoFn()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	var ids target.CredentialSources
@@ -1251,16 +1251,16 @@ func (s Service) removeCredentialSourcesInRepo(ctx context.Context, targetId str
 	_, err = repo.DeleteTargetCredentialSources(ctx, targetId, version, ids)
 	if err != nil {
 		// TODO: Figure out a way to surface more helpful error info beyond the Internal error.
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to remove credential sources from target: %v.", err)
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to remove credential sources from target: %v.", err)
 	}
-	out, hs, credSources, err := repo.LookupTarget(ctx, targetId)
+	out, ta, hs, credSources, err := repo.LookupTarget(ctx, targetId)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to look up target after removing credential sources"))
+		return nil, nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to look up target after removing credential sources"))
 	}
 	if out == nil {
-		return nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to lookup target after removing credential sources from it.")
+		return nil, nil, nil, nil, handlers.ApiErrorWithCodeAndMessage(codes.Internal, "Unable to lookup target after removing credential sources from it.")
 	}
-	return out, hs, credSources, nil
+	return out, ta, hs, credSources, nil
 }
 
 func (s Service) authResult(ctx context.Context, id string, a action.Type, lookupOpt ...target.Option) auth.VerifyResults {
@@ -1292,7 +1292,7 @@ func (s Service) authResult(ctx context.Context, id string, a action.Type, looku
 			res.Error = err
 			return res
 		}
-		t, _, _, err = repo.LookupTarget(ctx, id, lookupOpt...)
+		t, _, _, _, err = repo.LookupTarget(ctx, id, lookupOpt...)
 		if err != nil {
 			// TODO: Fix this with new/better error handling
 			if strings.Contains(err.Error(), "more than one row returned by a subquery") {
@@ -1316,7 +1316,7 @@ func (s Service) authResult(ctx context.Context, id string, a action.Type, looku
 	return ret
 }
 
-func toProto(ctx context.Context, in target.Target, hostSources []target.HostSource, credSources []target.CredentialSource, opt ...handlers.Option) (*pb.Target, error) {
+func toProto(ctx context.Context, in target.Target, staticAddress target.StaticAddress, hostSources []target.HostSource, credSources []target.CredentialSource, opt ...handlers.Option) (*pb.Target, error) {
 	const op = "target_service.toProto"
 	opts := handlers.GetOpts(opt...)
 	if opts.WithOutputFields == nil {

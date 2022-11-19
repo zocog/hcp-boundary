@@ -1511,7 +1511,7 @@ func testSessionCredentialParams(t *testing.T, conn *db.DB, wrapper wrapping.Wra
 	kms := kms.TestKms(t, conn, wrapper)
 	targetRepo, err := target.NewRepository(ctx, rw, rw, kms)
 	require.NoError(err)
-	tar, _, _, err := targetRepo.LookupTarget(ctx, params.TargetId)
+	tar, _, _, _, err := targetRepo.LookupTarget(ctx, params.TargetId)
 	require.NoError(err)
 	require.NotNil(tar)
 

@@ -735,16 +735,16 @@ func TestUpdate(t *testing.T) {
 		target.WithSessionConnectionLimit(1),
 		target.WithDefaultPort(2))
 	require.NoError(t, err)
-	tar, _, _, err := repo.CreateTarget(context.Background(), ttar)
+	tar, _, _, _, err := repo.CreateTarget(context.Background(), ttar)
 	require.NoError(t, err)
-	tar, _, _, err = repo.AddTargetHostSources(context.Background(), tar.GetPublicId(), tar.GetVersion(), []string{hs[0].GetPublicId(), hs[1].GetPublicId()})
+	tar, _, _, _, err = repo.AddTargetHostSources(context.Background(), tar.GetPublicId(), tar.GetVersion(), []string{hs[0].GetPublicId(), hs[1].GetPublicId()})
 	require.NoError(t, err)
 
 	resetTarget := func() {
-		itar, _, _, err := repo.LookupTarget(context.Background(), tar.GetPublicId())
+		itar, _, _, _, err := repo.LookupTarget(context.Background(), tar.GetPublicId())
 		require.NoError(t, err)
 
-		tar, _, _, _, err = repo.UpdateTarget(context.Background(), tar, itar.GetVersion(),
+		tar, _, _, _, _, err = repo.UpdateTarget(context.Background(), tar, itar.GetVersion(),
 			[]string{"Name", "Description", "SessionMaxSeconds", "SessionConnectionLimit", "DefaultPort"})
 		require.NoError(t, err, "Failed to reset target.")
 	}
@@ -1133,7 +1133,7 @@ func TestUpdate_BadVersion(t *testing.T) {
 	tar := ttar.(*tcp.Target)
 	tar.DefaultPort = 2
 	require.NoError(t, err)
-	gtar, _, _, err := repo.CreateTarget(context.Background(), tar)
+	gtar, _, _, _, err := repo.CreateTarget(context.Background(), tar)
 	require.NoError(t, err)
 
 	tested, err := testService(t, context.Background(), conn, kms, wrapper)

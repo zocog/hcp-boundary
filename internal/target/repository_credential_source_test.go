@@ -75,7 +75,7 @@ func TestRepository_SetTargetCredentialSources(t *testing.T) {
 			ids.BrokeredCredentialIds = append(ids.BrokeredCredentialIds, cred.GetPublicId())
 		}
 
-		_, _, created, err := repo.AddTargetCredentialSources(context.Background(), tar.GetPublicId(), 1, ids)
+		_, _, _, created, err := repo.AddTargetCredentialSources(context.Background(), tar.GetPublicId(), 1, ids)
 		require.NoError(t, err)
 		require.Equal(t, 10, len(created))
 		return created, ids

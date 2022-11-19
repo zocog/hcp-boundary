@@ -15,35 +15,35 @@ import (
 // targetVersion or an error will be returned.  The target and a list of current
 // host source ids will be returned on success. Zero is not a valid value for the
 // WithVersion option and will return an error.
-func (r *Repository) AddTargetHostSources(ctx context.Context, targetId string, targetVersion uint32, hostSourceIds []string, _ ...Option) (Target, []HostSource, []CredentialSource, error) {
+func (r *Repository) AddTargetHostSources(ctx context.Context, targetId string, targetVersion uint32, hostSourceIds []string, _ ...Option) (Target, StaticAddress, []HostSource, []CredentialSource, error) {
 	const op = "target.(Repository).AddTargetHostSources"
 	if targetId == "" {
-		return nil, nil, nil, errors.New(ctx, errors.InvalidParameter, op, "missing target id")
+		return nil, nil, nil, nil, errors.New(ctx, errors.InvalidParameter, op, "missing target id")
 	}
 	if targetVersion == 0 {
-		return nil, nil, nil, errors.New(ctx, errors.InvalidParameter, op, "missing version")
+		return nil, nil, nil, nil, errors.New(ctx, errors.InvalidParameter, op, "missing version")
 	}
 	if len(hostSourceIds) == 0 {
-		return nil, nil, nil, errors.New(ctx, errors.InvalidParameter, op, "missing host source ids")
+		return nil, nil, nil, nil, errors.New(ctx, errors.InvalidParameter, op, "missing host source ids")
 	}
 	newHostSources := make([]interface{}, 0, len(hostSourceIds))
 	for _, id := range hostSourceIds {
 		ths, err := NewTargetHostSet(targetId, id)
 		if err != nil {
-			return nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to create in memory target host set"))
+			return nil, nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to create in memory target host set"))
 		}
 		newHostSources = append(newHostSources, ths)
 	}
 	t := allocTargetView()
 	t.PublicId = targetId
 	if err := r.reader.LookupByPublicId(ctx, &t); err != nil {
-		return nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg(fmt.Sprintf("failed for %s", targetId)))
+		return nil, nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg(fmt.Sprintf("failed for %s", targetId)))
 	}
 	var metadata oplog.Metadata
 
 	alloc, ok := subtypeRegistry.allocFunc(t.Subtype())
 	if !ok {
-		return nil, nil, nil, errors.New(ctx, errors.InvalidParameter, op, fmt.Sprintf("%s is an unsupported target type %s", t.PublicId, t.Type))
+		return nil, nil, nil, nil, errors.New(ctx, errors.InvalidParameter, op, fmt.Sprintf("%s is an unsupported target type %s", t.PublicId, t.Type))
 	}
 
 	target := alloc()
@@ -54,10 +54,11 @@ func (r *Repository) AddTargetHostSources(ctx context.Context, targetId string, 
 
 	oplogWrapper, err := r.kms.GetWrapper(ctx, t.GetProjectId(), kms.KeyPurposeOplog)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to get oplog wrapper"))
+		return nil, nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to get oplog wrapper"))
 	}
 	var currentHostSources []HostSource
 	var currentCredSources []CredentialSource
+	var currentStaticAddress StaticAddress
 	var updatedTarget interface{}
 	_, err = r.writer.DoTx(
 		ctx,
@@ -97,13 +98,17 @@ func (r *Repository) AddTargetHostSources(ctx context.Context, targetId string, 
 			if err != nil {
 				return errors.Wrap(ctx, err, op, errors.WithMsg("unable to retrieve current credential sources after adds"))
 			}
+			currentStaticAddress, err = fetchStaticAddress(ctx, reader, targetId)
+			if err != nil {
+				return errors.Wrap(ctx, err, op, errors.WithMsg("unable to retrieve current target address after adds"))
+			}
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("error creating sets"))
+		return nil, nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("error creating sets"))
 	}
-	return updatedTarget.(Target), currentHostSources, currentCredSources, nil
+	return updatedTarget.(Target), currentStaticAddress, currentHostSources, currentCredSources, nil
 }
 
 // DeleteTargeHostSources deletes host sources from a target (targetId). The

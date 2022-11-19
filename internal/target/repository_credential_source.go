@@ -19,35 +19,35 @@ import (
 // The target and the list of credential sources attached to the target, after ids are added,
 // will be returned on success.
 // The targetVersion must match the current version of the targetId in the repository.
-func (r *Repository) AddTargetCredentialSources(ctx context.Context, targetId string, targetVersion uint32, idsByPurpose CredentialSources, _ ...Option) (Target, []HostSource, []CredentialSource, error) {
+func (r *Repository) AddTargetCredentialSources(ctx context.Context, targetId string, targetVersion uint32, idsByPurpose CredentialSources, _ ...Option) (Target, StaticAddress, []HostSource, []CredentialSource, error) {
 	const op = "target.(Repository).AddTargetCredentialSources"
 	if targetId == "" {
-		return nil, nil, nil, errors.New(ctx, errors.InvalidParameter, op, "missing target id")
+		return nil, nil, nil, nil, errors.New(ctx, errors.InvalidParameter, op, "missing target id")
 	}
 	if targetVersion == 0 {
-		return nil, nil, nil, errors.New(ctx, errors.InvalidParameter, op, "missing version")
+		return nil, nil, nil, nil, errors.New(ctx, errors.InvalidParameter, op, "missing version")
 	}
 
 	t := allocTargetView()
 	t.PublicId = targetId
 	if err := r.reader.LookupByPublicId(ctx, &t); err != nil {
-		return nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg(fmt.Sprintf("failed for %s", targetId)))
+		return nil, nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg(fmt.Sprintf("failed for %s", targetId)))
 	}
 	var metadata oplog.Metadata
 
 	alloc, ok := subtypeRegistry.allocFunc(t.Subtype())
 	if !ok {
-		return nil, nil, nil, errors.New(ctx, errors.InvalidParameter, op, fmt.Sprintf("%s is an unsupported target type %s", t.PublicId, t.Type))
+		return nil, nil, nil, nil, errors.New(ctx, errors.InvalidParameter, op, fmt.Sprintf("%s is an unsupported target type %s", t.PublicId, t.Type))
 	}
 
 	addCredLibs, addStaticCreds, err := r.createSources(ctx, targetId, t.Subtype(), idsByPurpose)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(ctx, err, op)
+		return nil, nil, nil, nil, errors.Wrap(ctx, err, op)
 	}
 
 	target := alloc()
 	if err := target.SetPublicId(ctx, t.PublicId); err != nil {
-		return nil, nil, nil, errors.Wrap(ctx, err, op)
+		return nil, nil, nil, nil, errors.Wrap(ctx, err, op)
 	}
 	target.SetVersion(targetVersion + 1)
 	metadata = target.Oplog(oplog.OpType_OP_TYPE_UPDATE)
@@ -55,11 +55,12 @@ func (r *Repository) AddTargetCredentialSources(ctx context.Context, targetId st
 
 	oplogWrapper, err := r.kms.GetWrapper(ctx, t.GetProjectId(), kms.KeyPurposeOplog)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to get oplog wrapper"))
+		return nil, nil, nil, nil, errors.Wrap(ctx, err, op, errors.WithMsg("unable to get oplog wrapper"))
 	}
 
 	var hostSources []HostSource
 	var credSources []CredentialSource
+	var staticAddress StaticAddress
 	var updatedTarget interface{}
 	_, err = r.writer.DoTx(
 		ctx,
@@ -121,13 +122,17 @@ func (r *Repository) AddTargetCredentialSources(ctx context.Context, targetId st
 			if err != nil {
 				return errors.Wrap(ctx, err, op, errors.WithMsg("unable to retrieve credential sources after adding"))
 			}
+			staticAddress, err = fetchStaticAddress(ctx, reader, targetId)
+			if err != nil {
+				return errors.Wrap(ctx, err, op, errors.WithMsg("unable to retrieve target address after adding"))
+			}
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(ctx, err, op)
+		return nil, nil, nil, nil, errors.Wrap(ctx, err, op)
 	}
-	return updatedTarget.(Target), hostSources, credSources, nil
+	return updatedTarget.(Target), staticAddress, hostSources, credSources, nil
 }
 
 // DeleteTargetCredentialSources deletes credential sources from a target in the repository.
