@@ -66,12 +66,8 @@ type Session struct {
 	PublicId string `json:"public_id,omitempty" gorm:"primary_key"`
 	// UserId for the session
 	UserId string `json:"user_id,omitempty" gorm:"default:null"`
-	// HostId of the session
-	HostId string `json:"host_id,omitempty" gorm:"default:null"`
 	// TargetId for the session
 	TargetId string `json:"target_id,omitempty" gorm:"default:null"`
-	// HostSetId for the session
-	HostSetId string `json:"host_set_id,omitempty" gorm:"default:null"`
 	// AuthTokenId for the session
 	AuthTokenId string `json:"auth_token_id,omitempty" gorm:"default:null"`
 	// ProjectId for the session
@@ -112,6 +108,14 @@ type Session struct {
 	// States for the session which are for read only and are ignored during
 	// write operations
 	States []*State `gorm:"-"`
+
+	// HostId of the session which is read only and is ignored during
+	// write operations
+	HostId string `json:"host_id,omitempty" gorm:"-"`
+
+	// HostSetId of the session which is read only and is ignored during
+	// write operations
+	HostSetId string `json:"host_set_id,omitempty" gorm:"-"`
 
 	// DynamicCredentials for the session.
 	DynamicCredentials []*DynamicCredential `gorm:"-"`
@@ -334,14 +338,8 @@ func (s *Session) validateNewSession() error {
 	if s.UserId == "" {
 		return errors.NewDeprecated(errors.InvalidParameter, op, "missing user id")
 	}
-	if s.HostId == "" {
-		return errors.NewDeprecated(errors.InvalidParameter, op, "missing host id")
-	}
 	if s.TargetId == "" {
 		return errors.NewDeprecated(errors.InvalidParameter, op, "missing target id")
-	}
-	if s.HostSetId == "" {
-		return errors.NewDeprecated(errors.InvalidParameter, op, "missing host set id")
 	}
 	if s.AuthTokenId == "" {
 		return errors.NewDeprecated(errors.InvalidParameter, op, "missing auth token id")

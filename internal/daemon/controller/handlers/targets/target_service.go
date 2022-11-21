@@ -749,6 +749,10 @@ func (s Service) AuthorizeSession(ctx context.Context, req *pbs.AuthorizeSession
 		endpoints = append(endpoints, eps...)
 	}
 
+	if len(endpoints) == 0 && staticAddress == nil {
+		return nil, handlers.NotFoundErrorf("No host sources or static address found for given target.")
+	}
+
 	var chosenEndpoint *host.Endpoint
 	if requestedId != "" {
 		for _, ep := range endpoints {
@@ -766,25 +770,29 @@ func (s Service) AuthorizeSession(ctx context.Context, req *pbs.AuthorizeSession
 		}
 	}
 
-	if chosenEndpoint == nil {
-		if len(endpoints) == 0 {
-			// No hosts were found, error
-			return nil, handlers.NotFoundErrorf("No endpoint found from available target host sources.")
-		}
+	var h, p, hostId, hostSetId string
+	if chosenEndpoint == nil && len(endpoints) > 0 {
 		chosenEndpoint = endpoints[rand.Intn(len(endpoints))]
+		hostId = chosenEndpoint.HostId
+		hostSetId = chosenEndpoint.SetId
+		h, p, err = net.SplitHostPort(chosenEndpoint.Address)
+		switch {
+		case err != nil && strings.Contains(err.Error(), missingPortErrStr):
+			if t.GetDefaultPort() == 0 {
+				return nil, errors.New(ctx, errors.InvalidParameter, op, fmt.Sprintf("neither the selected host %q nor the target provides a port to use", chosenEndpoint.HostId))
+			}
+			h = chosenEndpoint.Address
+			p = strconv.FormatUint(uint64(t.GetDefaultPort()), 10)
+		case err != nil:
+			return nil, errors.Wrap(ctx, err, op, errors.WithMsg("error when parsing the chosen endpoints host address"))
+		}
 	}
 
-	h, p, err := net.SplitHostPort(chosenEndpoint.Address)
-	switch {
-	case err != nil && strings.Contains(err.Error(), missingPortErrStr):
-		if t.GetDefaultPort() == 0 {
-			return nil, errors.New(ctx, errors.InvalidParameter, op, fmt.Sprintf("neither the selected host %q nor the target provides a port to use", chosenEndpoint.HostId))
-		}
-		h = chosenEndpoint.Address
+	if staticAddress != nil {
+		h = staticAddress.Address()
 		p = strconv.FormatUint(uint64(t.GetDefaultPort()), 10)
-	case err != nil:
-		return nil, errors.Wrap(ctx, err, op, errors.WithMsg("error when parsing the chosen endpoints host address"))
 	}
+
 	// Generate the endpoint URL
 	endpointUrl := &url.URL{
 		Scheme: t.GetType().String(),
@@ -825,9 +833,9 @@ func (s Service) AuthorizeSession(ctx context.Context, req *pbs.AuthorizeSession
 	expTime.Seconds += int64(t.GetSessionMaxSeconds())
 	sessionComposition := session.ComposedOf{
 		UserId:             authResults.UserId,
-		HostId:             chosenEndpoint.HostId,
+		HostId:             hostId,
 		TargetId:           t.GetPublicId(),
-		HostSetId:          chosenEndpoint.SetId,
+		HostSetId:          hostSetId,
 		AuthTokenId:        authResults.AuthTokenId,
 		ProjectId:          authResults.Scope.Id,
 		Endpoint:           endpointUrl.String(),
@@ -838,6 +846,7 @@ func (s Service) AuthorizeSession(ctx context.Context, req *pbs.AuthorizeSession
 		StaticCredentials:  staticCreds,
 	}
 
+	// TODO: Create SessionTargetAddress or SessionHost or SessionHostSet rows
 	sess, err := session.New(sessionComposition)
 	if err != nil {
 		return nil, err
@@ -943,7 +952,7 @@ func (s Service) AuthorizeSession(ctx context.Context, req *pbs.AuthorizeSession
 		Type:            t.GetType().String(),
 		Certificate:     sess.Certificate,
 		PrivateKey:      sess.CertificatePrivateKey,
-		HostId:          chosenEndpoint.HostId,
+		HostId:          hostId,
 		Endpoint:        endpointUrl.String(),
 		WorkerInfo:      workerList(selectedWorkers).workerInfos(),
 		ConnectionLimit: t.GetSessionConnectionLimit(),
@@ -962,8 +971,8 @@ func (s Service) AuthorizeSession(ctx context.Context, req *pbs.AuthorizeSession
 		Type:               t.GetType().String(),
 		AuthorizationToken: encodedMarshaledSad,
 		UserId:             authResults.UserId,
-		HostId:             chosenEndpoint.HostId,
-		HostSetId:          chosenEndpoint.SetId,
+		HostId:             hostId,
+		HostSetId:          hostSetId,
 		Endpoint:           endpointUrl.String(),
 		Credentials:        creds,
 	}

@@ -34,14 +34,8 @@ func (r *Repository) CreateSession(ctx context.Context, sessionWrapper wrapping.
 	if newSession.TargetId == "" {
 		return nil, errors.New(ctx, errors.InvalidParameter, op, "missing target id")
 	}
-	if newSession.HostId == "" {
-		return nil, errors.New(ctx, errors.InvalidParameter, op, "missing host id")
-	}
 	if newSession.UserId == "" {
 		return nil, errors.New(ctx, errors.InvalidParameter, op, "missing user id")
-	}
-	if newSession.HostSetId == "" {
-		return nil, errors.New(ctx, errors.InvalidParameter, op, "missing host set id")
 	}
 	if newSession.AuthTokenId == "" {
 		return nil, errors.New(ctx, errors.InvalidParameter, op, "missing auth token id")
@@ -89,6 +83,38 @@ func (r *Repository) CreateSession(ctx context.Context, sessionWrapper wrapping.
 			returnedSession.StaticCredentials = nil
 			if err = w.Create(ctx, returnedSession); err != nil {
 				return errors.Wrap(ctx, err, op)
+			}
+
+			if newSession.HostSetId != "" {
+				shs, err := NewSessionHostSet(newSession.PublicId, newSession.HostSetId)
+				if err != nil {
+					return errors.Wrap(ctx, err, op)
+				}
+				if err = w.Create(ctx, shs); err != nil {
+					return errors.Wrap(ctx, err, op)
+				}
+				returnedSession.HostSetId = shs.HostSetId
+			}
+
+			if newSession.HostId != "" {
+				sh, err := NewSessionHost(newSession.PublicId, newSession.HostId)
+				if err != nil {
+					return errors.Wrap(ctx, err, op)
+				}
+				if err = w.Create(ctx, sh); err != nil {
+					return errors.Wrap(ctx, err, op)
+				}
+				returnedSession.HostId = sh.HostId
+			}
+
+			if newSession.HostId == "" && newSession.HostSetId == "" && newSession.Endpoint != "" {
+				sta, err := NewSessionTargetAddress(newSession.PublicId, newSession.TargetId)
+				if err != nil {
+					return errors.Wrap(ctx, err, op)
+				}
+				if err = w.Create(ctx, sta); err != nil {
+					return errors.Wrap(ctx, err, op)
+				}
 			}
 
 			for _, cred := range newSession.DynamicCredentials {
