@@ -48,8 +48,8 @@ func (s *SessionTargetAddress) SetTableName(n string) {
 }
 
 // AllocSessionTargetAddress will allocate a SessionTargetAddress
-func AllocSessionTargetAddress() SessionTargetAddress {
-	return SessionTargetAddress{}
+func AllocSessionTargetAddress() *SessionTargetAddress {
+	return &SessionTargetAddress{}
 }
 
 // Clone creates a clone of the SessionTargetAddress

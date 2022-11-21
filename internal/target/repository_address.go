@@ -13,7 +13,7 @@ func fetchStaticAddress(ctx context.Context, r db.Reader, targetId string) (Stat
 	if err := r.SearchWhere(ctx, &staticAddress, "public_id = ?", []interface{}{targetId}); err != nil {
 		return nil, errors.Wrap(ctx, err, op)
 	}
-	if staticAddress == nil {
+	if staticAddress.TargetAddress == nil {
 		return nil, nil
 	}
 	return staticAddress, nil

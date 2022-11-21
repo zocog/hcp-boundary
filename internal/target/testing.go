@@ -36,6 +36,15 @@ func TestNewStaticCredential(targetId, credentialId string, purpose credential.P
 	}
 }
 
+func TestNewStaticAddress(targetId, address string) *TargetAddress {
+	return &TargetAddress{
+		TargetAddress: &store.TargetAddress{
+			PublicId: targetId,
+			Address:  address,
+		},
+	}
+}
+
 // TestCredentialLibrary creates a CredentialLibrary for targetId and
 // libraryId with the credential purpose of brokered.
 func TestCredentialLibrary(t testing.TB, conn *db.DB, targetId, libraryId string) *CredentialLibrary {
@@ -46,4 +55,14 @@ func TestCredentialLibrary(t testing.TB, conn *db.DB, targetId, libraryId string
 	err := rw.Create(context.Background(), lib)
 	require.NoError(err)
 	return lib
+}
+
+func TestStaticAddress(t testing.TB, conn *db.DB, targetId, address string) *TargetAddress {
+	t.Helper()
+	require := require.New(t)
+	rw := db.New(conn)
+	staticAddress := TestNewStaticAddress(targetId, address)
+	err := rw.Create(context.Background(), staticAddress)
+	require.NoError(err)
+	return staticAddress
 }

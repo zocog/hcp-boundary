@@ -44,6 +44,6 @@ begin;
     'remove_target_host_set will remove any existing rows in the target_host_set table because target to host source is a mutually exclusive relationship to a network address.';
 
   create trigger remove_target_host_set after insert on target_address
-    for each row execute function remove_target_host_set();xw
+    for each row execute function remove_target_host_set();
 
 commit;

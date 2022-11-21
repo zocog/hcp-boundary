@@ -47,8 +47,8 @@ func (s *SessionHost) SetTableName(n string) {
 }
 
 // AllocSessionHost will allocate a SessionHost
-func AllocSessionHost() SessionHost {
-	return SessionHost{}
+func AllocSessionHost() *SessionHost {
+	return &SessionHost{}
 }
 
 // Clone creates a clone of the SessionHost

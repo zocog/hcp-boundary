@@ -149,7 +149,7 @@ func TestRepository_convertToSessions(t *testing.T) {
 		sessions, err := repo.convertToSessions(ctx, sessionsList)
 		require.NoError(t, err)
 		assert.Len(t, sessions, 1)
-		assert.Equal(t, sessions[0], sess)
+		assert.Equal(t, sess, sessions[0])
 	})
 
 	t.Run("converting-for-list", func(t *testing.T) {
@@ -163,6 +163,6 @@ func TestRepository_convertToSessions(t *testing.T) {
 		sess.CtTofuToken = nil
 		sess.TofuToken = nil
 		sess.KeyId = ""
-		assert.Equal(t, sessions[0], sess)
+		assert.Equal(t, sess, sessions[0])
 	})
 }

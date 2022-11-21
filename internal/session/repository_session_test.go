@@ -23,6 +23,7 @@ import (
 	"github.com/hashicorp/boundary/internal/oplog"
 	"github.com/hashicorp/boundary/internal/perms"
 	"github.com/hashicorp/boundary/internal/target"
+	targetStore "github.com/hashicorp/boundary/internal/target/store"
 	"github.com/hashicorp/boundary/internal/target/tcp"
 	tcpStore "github.com/hashicorp/boundary/internal/target/tcp/store"
 	"github.com/hashicorp/boundary/internal/types/action"
@@ -308,6 +309,14 @@ func TestRepository_CreateSession(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "valid-static-address",
+			args: args{
+				composedOf:      testSessionStaticAddressParams(t, conn, wrapper, iamRepo),
+				workerAddresses: workerAddresses,
+			},
+			wantErr: false,
+		},
+		{
 			name: "empty-userId",
 			args: args{
 				composedOf: func() ComposedOf {
@@ -321,18 +330,6 @@ func TestRepository_CreateSession(t *testing.T) {
 			wantIsError: errors.InvalidParameter,
 		},
 		{
-			name: "empty-hostId",
-			args: args{
-				composedOf: func() ComposedOf {
-					c := TestSessionParams(t, conn, wrapper, iamRepo)
-					c.HostId = ""
-					return c
-				}(),
-				workerAddresses: workerAddresses,
-			},
-			wantErr: false,
-		},
-		{
 			name: "empty-targetId",
 			args: args{
 				composedOf: func() ComposedOf {
@@ -344,18 +341,6 @@ func TestRepository_CreateSession(t *testing.T) {
 			},
 			wantErr:     true,
 			wantIsError: errors.InvalidParameter,
-		},
-		{
-			name: "empty-hostSetId",
-			args: args{
-				composedOf: func() ComposedOf {
-					c := TestSessionParams(t, conn, wrapper, iamRepo)
-					c.HostSetId = ""
-					return c
-				}(),
-				workerAddresses: workerAddresses,
-			},
-			wantErr: false,
 		},
 		{
 			name: "empty-authTokenId",
@@ -1137,8 +1122,13 @@ func TestRepository_CancelSessionViaFKNull(t *testing.T) {
 	ctx := context.Background()
 	repo, err := NewRepository(ctx, rw, rw, kms)
 	require.NoError(t, err)
-	setupFn := func() *Session {
+	setupHostSourceFn := func() *Session {
 		session := TestDefaultSession(t, conn, wrapper, iamRepo)
+		_ = TestConnection(t, conn, session.PublicId, "127.0.0.1", 22, "127.0.0.1", 2222, "127.0.0.1")
+		return session
+	}
+	setupStaticAddressFn := func() *Session {
+		session := TestSessionStaticAddress(t, conn, wrapper, iamRepo)
 		_ = TestConnection(t, conn, session.PublicId, "127.0.0.1", 22, "127.0.0.1", 2222, "127.0.0.1")
 		return session
 	}
@@ -1153,7 +1143,7 @@ func TestRepository_CancelSessionViaFKNull(t *testing.T) {
 		{
 			name: "UserId",
 			cancelFk: func() cancelFk {
-				s := setupFn()
+				s := setupHostSourceFn()
 				t := &iam.User{
 					User: &iamStore.User{
 						PublicId: s.UserId,
@@ -1168,7 +1158,7 @@ func TestRepository_CancelSessionViaFKNull(t *testing.T) {
 		{
 			name: "Host",
 			cancelFk: func() cancelFk {
-				s := setupFn()
+				s := setupHostSourceFn()
 
 				t := &static.Host{
 					Host: &staticStore.Host{
@@ -1184,7 +1174,7 @@ func TestRepository_CancelSessionViaFKNull(t *testing.T) {
 		{
 			name: "Target",
 			cancelFk: func() cancelFk {
-				s := setupFn()
+				s := setupHostSourceFn()
 
 				t := &tcp.Target{
 					Target: &tcpStore.Target{
@@ -1198,9 +1188,25 @@ func TestRepository_CancelSessionViaFKNull(t *testing.T) {
 			}(),
 		},
 		{
+			name: "StaticAddress",
+			cancelFk: func() cancelFk {
+				s := setupStaticAddressFn()
+
+				ta := &target.TargetAddress{
+					TargetAddress: &targetStore.TargetAddress{
+						PublicId: s.TargetId,
+					},
+				}
+				return cancelFk{
+					s:      s,
+					fkType: ta,
+				}
+			}(),
+		},
+		{
 			name: "HostSet",
 			cancelFk: func() cancelFk {
-				s := setupFn()
+				s := setupHostSourceFn()
 
 				t := &static.HostSet{
 					HostSet: &staticStore.HostSet{
@@ -1216,7 +1222,7 @@ func TestRepository_CancelSessionViaFKNull(t *testing.T) {
 		{
 			name: "AuthToken",
 			cancelFk: func() cancelFk {
-				s := setupFn()
+				s := setupHostSourceFn()
 
 				t := &authtoken.AuthToken{
 					AuthToken: &authtokenStore.AuthToken{
@@ -1235,20 +1241,21 @@ func TestRepository_CancelSessionViaFKNull(t *testing.T) {
 		{
 			name: "canceled-only-once",
 			cancelFk: func() cancelFk {
-				s := setupFn()
+				s := setupHostSourceFn()
+				host := &static.Host{
+					Host: &staticStore.Host{
+						PublicId: s.HostId,
+					},
+				}
+
 				var err error
 				s, err = repo.CancelSession(context.Background(), s.PublicId, s.Version)
 				require.NoError(t, err)
 				require.Equal(t, StatusCanceling, s.States[0].Status)
 
-				t := &static.Host{
-					Host: &staticStore.Host{
-						PublicId: s.HostId,
-					},
-				}
 				return cancelFk{
 					s:      s,
-					fkType: t,
+					fkType: host,
 				}
 			}(),
 		},
@@ -1496,6 +1503,29 @@ func TestRepository_DeleteSession(t *testing.T) {
 			assert.Error(err)
 		})
 	}
+}
+
+func testSessionStaticAddressParams(t *testing.T, conn *db.DB, wrapper wrapping.Wrapper, iamRepo *iam.Repository) ComposedOf {
+	t.Helper()
+	params := TestSessionParams(t, conn, wrapper, iamRepo)
+	require := require.New(t)
+	rw := db.New(conn)
+
+	ctx := context.Background()
+
+	kms := kms.TestKms(t, conn, wrapper)
+	targetRepo, err := target.NewRepository(ctx, rw, rw, kms)
+	require.NoError(err)
+	tar, _, _, _, err := targetRepo.LookupTarget(ctx, params.TargetId)
+	require.NoError(err)
+	require.NotNil(tar)
+
+	target.TestStaticAddress(t, conn, tar.GetPublicId(), "tcp://127.0.0.1:22")
+	params.HostId = ""
+	params.HostSetId = ""
+	params.Endpoint = "8.8.8.8"
+
+	return params
 }
 
 func testSessionCredentialParams(t *testing.T, conn *db.DB, wrapper wrapping.Wrapper, iamRepo *iam.Repository) ComposedOf {

@@ -223,6 +223,18 @@ func (r *Repository) LookupSession(ctx context.Context, sessionId string, opt ..
 				session.StaticCredentials = staticCreds
 			}
 
+			sessionHost := AllocSessionHost()
+			if err := read.LookupWhere(ctx, sessionHost, "public_id = ?", []interface{}{sessionId}); err != nil && !errors.IsNotFoundError(err) {
+				return errors.Wrap(ctx, err, op)
+			}
+			session.HostId = sessionHost.HostId
+
+			sessionHostSet := AllocSessionHostSet()
+			if err := read.LookupWhere(ctx, sessionHostSet, "public_id = ?", []interface{}{sessionId}); err != nil && !errors.IsNotFoundError(err) {
+				return errors.Wrap(ctx, err, op)
+			}
+			session.HostSetId = sessionHostSet.HostSetId
+
 			connections, err := fetchConnections(ctx, read, sessionId, db.WithOrder("create_time desc"))
 			if err != nil {
 				return errors.Wrap(ctx, err, op)
@@ -371,6 +383,8 @@ func (r *Repository) CancelSession(ctx context.Context, sessionId string, sessio
 	if sessionVersion == 0 {
 		return nil, errors.New(ctx, errors.InvalidParameter, op, "missing session version")
 	}
+
+	// TODO (DAMIAN): what to do with sessionHost, sessionHostSet, & sessionTargetAddress when manually canceling a session
 	s, ss, err := r.updateState(ctx, sessionId, sessionVersion, StatusCanceling, opt...)
 	if err != nil {
 		return nil, errors.Wrap(ctx, err, op)

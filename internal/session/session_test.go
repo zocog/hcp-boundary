@@ -67,6 +67,32 @@ func TestSession_Create(t *testing.T) {
 			create: true,
 		},
 		{
+			name: "valid-empty-host-source",
+			args: args{
+				composedOf: func() ComposedOf {
+					c := composedOf
+					c.HostSetId = ""
+					c.HostId = ""
+					return c
+				}(),
+				addresses: defaultAddresses,
+			},
+			want: &Session{
+				UserId:             composedOf.UserId,
+				HostId:             "",
+				HostSetId:          "",
+				TargetId:           composedOf.TargetId,
+				AuthTokenId:        composedOf.AuthTokenId,
+				ProjectId:          composedOf.ProjectId,
+				Endpoint:           "tcp://127.0.0.1:22",
+				ExpirationTime:     composedOf.ExpirationTime,
+				ConnectionLimit:    composedOf.ConnectionLimit,
+				DynamicCredentials: composedOf.DynamicCredentials,
+				StaticCredentials:  composedOf.StaticCredentials,
+			},
+			create: true,
+		},
+		{
 			name: "empty-userId",
 			args: args{
 				composedOf: func() ComposedOf {
@@ -80,37 +106,11 @@ func TestSession_Create(t *testing.T) {
 			wantIsErr: errors.InvalidParameter,
 		},
 		{
-			name: "empty-hostId",
-			args: args{
-				composedOf: func() ComposedOf {
-					c := composedOf
-					c.HostId = ""
-					return c
-				}(),
-				addresses: defaultAddresses,
-			},
-			wantErr:   true,
-			wantIsErr: errors.InvalidParameter,
-		},
-		{
 			name: "empty-targetId",
 			args: args{
 				composedOf: func() ComposedOf {
 					c := composedOf
 					c.TargetId = ""
-					return c
-				}(),
-				addresses: defaultAddresses,
-			},
-			wantErr:   true,
-			wantIsErr: errors.InvalidParameter,
-		},
-		{
-			name: "empty-hostSetId",
-			args: args{
-				composedOf: func() ComposedOf {
-					c := composedOf
-					c.HostSetId = ""
 					return c
 				}(),
 				addresses: defaultAddresses,

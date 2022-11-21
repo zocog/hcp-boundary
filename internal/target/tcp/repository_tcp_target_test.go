@@ -69,8 +69,8 @@ func TestRepository_CreateTarget(t *testing.T) {
 			args: args{
 				target: func() target.Target {
 					target, err := target.New(ctx, tcp.Subtype, proj.PublicId,
-						target.WithName("valid-org"),
-						target.WithDescription("valid-org"),
+						target.WithName("valid-static-address"),
+						target.WithDescription("valid-static-address"),
 						target.WithDefaultPort(uint32(22)),
 						target.WithAddress("0.0.0.0"))
 					require.NoError(t, err)
@@ -282,7 +282,7 @@ func TestRepository_UpdateTcpTarget(t *testing.T) {
 			newProjectId:   proj.PublicId,
 			newTargetOpts:  []target.Option{target.WithAddress("0.0.0.0")},
 			wantErr:        false,
-			wantRowsUpdate: 0,
+			wantRowsUpdate: 1,
 		},
 		{
 			name: "empty-field-mask",
