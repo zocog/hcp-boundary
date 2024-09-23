@@ -166,11 +166,10 @@ func (r *Repository) convertToSessions(ctx context.Context, sessionList []*sessi
 
 		if _, ok := states[sv.EndTime]; !ok {
 			states[sv.EndTime] = &State{
-				SessionId:       sv.PublicId,
-				Status:          Status(sv.Status),
-				PreviousEndTime: sv.PreviousEndTime,
-				StartTime:       sv.StartTime,
-				EndTime:         sv.EndTime,
+				SessionId: sv.PublicId,
+				Status:    Status(sv.Status),
+				StartTime: sv.StartTime,
+				EndTime:   sv.EndTime,
 			}
 		}
 

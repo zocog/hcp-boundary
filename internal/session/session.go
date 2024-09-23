@@ -599,10 +599,9 @@ type sessionListView struct {
 	ProtocolWorkerId        string               `json:"protocol_worker_id,omitempty" gorm:"default:null"`
 
 	// State fields
-	Status          string               `json:"state,omitempty" gorm:"column:state"`
-	PreviousEndTime *timestamp.Timestamp `json:"previous_end_time,omitempty" gorm:"default:current_timestamp"`
-	StartTime       *timestamp.Timestamp `json:"start_time,omitempty" gorm:"default:current_timestamp;primary_key"`
-	EndTime         *timestamp.Timestamp `json:"end_time,omitempty" gorm:"default:current_timestamp"`
+	Status    string               `json:"state,omitempty" gorm:"column:state"`
+	StartTime *timestamp.Timestamp `json:"start_time,omitempty" gorm:"default:current_timestamp;primary_key"`
+	EndTime   *timestamp.Timestamp `json:"end_time,omitempty" gorm:"default:current_timestamp"`
 }
 
 // TableName returns the tablename to override the default gorm table name
